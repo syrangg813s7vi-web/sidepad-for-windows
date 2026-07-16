@@ -61,12 +61,21 @@
   - `README.md`
 
 ### Phase 5: GitHub 发布
-- **Status:** in_progress
+- **Status:** complete
+- Actions taken:
+  - 创建私有仓库 `syrangg813s7vi-web/sidepad-for-windows`。
+  - 提交项目代码、设计文档、进度文档和界面预览。
+  - 将本地 `main` 推送到 GitHub 并设置上游分支。
 
 ## Test Results
 | Test | Input | Expected | Actual | Status |
 |------|-------|----------|--------|--------|
 | Node/npm 环境 | `node --version`, `npm --version` | 工具可用 | v22.22.2 / 10.9.7 | ✓ |
+| JavaScript 语法 | `npm run check` | 全部通过 | 全部通过 | ✓ |
+| 依赖安全 | `npm audit` | 无已知漏洞 | 0 vulnerabilities | ✓ |
+| Electron 冒烟 | `npm start` | 主进程稳定运行 | 无运行时错误 | ✓ |
+| Windows x64 构建 | `npm run dist` | NSIS + portable | 两个 x64 EXE 已生成 | ✓ |
+| GitHub 推送 | `gh repo create ... --push` | 远程 main 可用 | 推送成功 | ✓ |
 
 ## Error Log
 | Timestamp | Error | Attempt | Resolution |
@@ -83,8 +92,8 @@
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 2：桌面容器架构 |
-| Where am I going? | 多内容实现、验证、GitHub 发布 |
+| Where am I? | 首个版本已完成并发布 |
+| Where am I going? | Windows 实机验收与下一轮功能迭代 |
 | What's the goal? | 可发布的 Windows 多内容 Sidepad |
 | What have I learned? | 见 `findings.md` |
 | What have I done? | Electron 骨架与网页面板已实现，见上方日志 |

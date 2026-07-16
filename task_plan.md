@@ -4,7 +4,7 @@
 交付一个可运行、可打包并发布到 GitHub 的自包含 Windows Sidepad：贴边自动隐藏，可承载 Chromium 网页、文本、图片、PDF 与 PPTX/Office 内容，安装后不依赖外部组件。
 
 ## Current Phase
-Phase 5
+Complete
 
 ## Phases
 
@@ -44,10 +44,10 @@ Phase 5
 
 ### Phase 5: GitHub 发布
 - [x] 检查 GitHub CLI 登录和仓库状态
-- [ ] 初始化 Git、创建 GitHub 仓库并配置远程
-- [ ] 提交并推送代码
-- [ ] 记录仓库地址与后续运行方式
-- **Status:** pending
+- [x] 初始化 Git、创建 GitHub 仓库并配置远程
+- [x] 提交并推送代码
+- [x] 记录仓库地址与后续运行方式
+- **Status:** complete
 
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。
