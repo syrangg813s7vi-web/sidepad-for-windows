@@ -13,14 +13,19 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer/app.js",
+    "check": "node --check src/main.js && node --check src/window-layout.js && node --check src/preload.js && node --check src/renderer/app.js",
+    "test:layout": "node --test tests/window-layout.test.js",
+    "test:e2e": "node tests/electron-e2e.js",
+    "test": "npm run check && npm run test:layout && npm run test:e2e",
     "dist": "npm run dist:win:x64",
     "dist:win:x64": "electron-builder --win nsis portable --x64",
     "dist:win:arm64": "electron-builder --win nsis portable --arm64"
   },
   "devDependencies": {
+    "docx": "^9.5.1",
     "electron": "^43.1.1",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "pptxgenjs": "^4.0.1"
   },
   "overrides": {
     "echarts": "^6.1.0",

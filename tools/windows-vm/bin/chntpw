@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# chntpw 1.00 on Apple Silicon fails while opening a hive when stdout is
+# redirected to /dev/null. CrystalFetch redirects this command, so preserve
+# its diagnostics on stderr and keep stdout attached to a working stream.
+exec /usr/local/bin/chntpw "$@" 1>&2

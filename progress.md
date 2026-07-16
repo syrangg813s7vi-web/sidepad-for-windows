@@ -76,6 +76,11 @@
 | Electron 冒烟 | `npm start` | 主进程稳定运行 | 无运行时错误 | ✓ |
 | Windows x64 构建 | `npm run dist` | NSIS + portable | 两个 x64 EXE 已生成 | ✓ |
 | GitHub 推送 | `gh repo create ... --push` | 远程 main 可用 | 推送成功 | ✓ |
+| Windows x64 边缘唤出 | 1280×800 / DISPLAY1 | 右边缘展开为窄面板 | 554px，left=734 | ✓ |
+| Windows x64 自动隐藏 | 鼠标和焦点移离 | 主面板不可见 | collapsed width=0 | ✓ |
+| Windows x64 Chromium 网页 | 来宾访问宿主机本地 QA 页 | 页面标题与内容可加载 | `chromium_webview=true` | ✓ |
+| Windows x64 笔记持久化 | 创建并重新打开笔记 | 内容保持一致 | `Updated note on Windows x64` | ✓ |
+| Windows x64 文档预览 | TXT、DOCX、PPTX、XLSX | 全部由内置运行时打开 | 四种格式全部通过 | ✓ |
 
 ## Error Log
 | Timestamp | Error | Attempt | Resolution |
@@ -88,6 +93,17 @@
 | 2026-07-16 | npm 替换 echarts 时 ENOTEMPTY | 1 | 删除生成依赖目录并执行干净安装 |
 | 2026-07-16 | registry.npmjs.org 下载 EIDLETIMEOUT | 2 | npm 包和 Electron 二进制同时改用 npmmirror |
 | 2026-07-16 | Electron 43 首次运行无法从默认源取二进制 | 1 | 改用显式安装脚本并传入 Electron 镜像 |
+| 2026-07-16 | E2E 在首页初始化前断言卡片数量 | 1 | 增加 DOM 与卡片渲染等待条件 |
+| 2026-07-16 | DOCX E2E 显示 `Failed to fetch` | 1 | 为受控本地协议增加 `corsEnabled` 权限 |
+| 2026-07-16 | DOCX 解析时报 `loadAsync` 未定义 | 1 | 显式加载自包含 JSZip 浏览器运行时 |
+| 2026-07-16 | UUP 下载器找不到 aria2c | 1 | 修正为 CrystalFetch 的 `Contents/MacOS/aria2c` |
+| 2026-07-16 | CrystalFetch 内置 aria2c 命令行退出 133 | 2 | 安装 Homebrew aria2 并切换下载脚本 |
+| 2026-07-16 | CrystalFetch 内置 ISO 转换工具退出 133 | 1 | 安装独立 wimlib/cdrtools/cabextract，源码编译 chntpw |
+| 2026-07-16 | sidneys/chntpw 依赖的 OpenSSL 1.0 在 Apple Silicon 测试失败 | 1 | 不阻塞现有 ISO 实装；若 WinPE 启动失败再替换注册表修改方案 |
+| 2026-07-16 | chntpw 在 CrystalFetch 的 stdout 重定向下报 `Inappropriate ioctl` | 2 | 新增命令包装器，将输出改走 stderr；避免同时误改 boot.wim 两个索引 |
+| 2026-07-16 | x64 安装运行中无法向 q35 `pcie.0` 热插拔 virtio-serial | 1 | 不干扰当前安装；首次关机后用静态 QEMU 参数加入 QGA 通道 |
+| 2026-07-16 | 后台 QEMU 首次同时设置 `-machine accel=` 与 `-accel` | 1 | 删除重复声明后成功以 daemon 模式启动 |
+| 2026-07-16 | Windows 首次硬盘启动提示意外重启、安装无法继续 | 1 | 在 Setup 命令行将 `ChildCompletion\\setup.exe` 设为 3，安装恢复 |
 
 ## 5-Question Reboot Check
 | Question | Answer |
@@ -97,3 +113,72 @@
 | What's the goal? | 可发布的 Windows 多内容 Sidepad |
 | What have I learned? | 见 `findings.md` |
 | What have I done? | Electron 骨架与网页面板已实现，见上方日志 |
+
+### Phase 6: Windows 虚拟机验收
+- **Status:** in_progress
+- Actions taken:
+  - 安装 UTM 4.7.5 与 CrystalFetch 2.2.0。
+  - 确认 Windows 11 25H2 ARM64 可用于 Apple Silicon 虚拟机。
+  - 完成真实 Electron E2E，网页、笔记、DOCX、PPTX、XLSX 与边缘展开/收起全部通过。
+  - 生成并检查最新 Windows x64 与 ARM64 安装包；ARM64 安装器已封装进无人值守测试盘。
+  - UTM 虚拟机已启动并通过 QMP 截图确认 ARM64 EFI/WinPE 启动链路。
+  - 微软官方 Windows 11 25H2 简体中文 ARM64 原版 ISO 正在下载。
+  - 开始准备 Windows 11 ARM64 镜像和 UTM 虚拟机。
+  - 下载并逐文件校验 91 个 Windows x64 UUP 组件，生成 4.2 GiB 简体中文专业版 ISO。
+  - 检查 ISO 内 `install.wim`：单一 Professional 索引、x86_64、zh-CN；ISO SHA-256 为 `dc4cf15d0835a4f07fce74365091efea159cf2c8fc351b3defd939f28c7fbdcd`。
+  - 将无人值守安装盘与虚拟机创建脚本参数化为 amd64/x86_64，并封装最新 x64 Sidepad 安装器。
+  - 安装 QEMU 11.0.2 Apple Silicon 原生版本，启动真正的 `qemu-system-x86_64` TCG 虚拟机。
+  - 通过 QMP 截图确认 x64 UEFI 已加载 `bootx64.efi` 并进入 Windows 启动画面。
+  - 转换版 x64 ISO 的 WinPE 加载后重启回 UEFI Shell，虚拟磁盘未开始写入；该结果不作为 Windows x64 验收。
+  - 改用微软 Evaluation Center 的 Windows 11 Enterprise 25H2 简体中文 x64 原版 ISO；微软公布 SHA-256 为 `7B4AC87391B659F7724229682B642256289A1C00504056249F0F12029157D3D2`。
+  - 新增可重试、区块内断点续传和 SHA-256 校验的大文件下载器；官方 ISO 正在下载。
+  - 微软原版 ISO 下载完成，完整 SHA-256 与官方值一致。
+  - 检查原版 `install.wim`：单一 Windows 11 Enterprise Evaluation 索引、x86_64、zh-CN、Build 26200.6584。
+  - 原版 WinPE 成功启动，无人值守安装已自动分区并写入全新 qcow2；当前安装进度 16%。
+  - 原版 x64 安装推进到 27%；通过 QMP 将后续启动顺序切换为系统硬盘，避免首次重启再次从安装 ISO 启动。
+  - 运行时增加 `127.0.0.1:19222 -> Windows:9222` 端口转发，供首次登录后从宿主机读取 Sidepad CDP 验证目标。
+  - 尝试运行时热插拔 QEMU Guest Agent 通道；q35 根总线不支持直接热插拔，改为安装完成后在下次启动参数中静态加入 virtio-serial。
+  - x64 Windows 安装推进到 42%，qcow2 已增长到约 7.2 GiB，写盘持续正常。
+  - 新增并通过语法检查的 Windows 来宾 CDP 验证器，可自动验证 Chromium、笔记、文本与 DOCX/PPTX/XLSX。
+  - 生成 `SIDEPAD_QA` 自包含测试文件 ISO，并通过 QMP/USB 热插入正在安装的 x64 虚拟机。
+  - x64 Windows 安装推进到 47%。
+  - 调查双屏模拟路径：当前 QEMU 无 SPICE/QXL，后续将用支持 `max_outputs` 的 virtio-vga 冷启动验证。
+  - 安装进入 59% 的慢速映像展开阶段；连续检查确认 QEMU 约 250% CPU、qcow2 修改时间持续更新，并非进程挂起。
+  - 安装随后推进到 83%；在该百分比停留较久，但 QEMU 块设备计数在 10 秒采样内仍增加读写与 flush，确认安装任务仍活跃。
+  - 前台 QEMU 会话结束后，以独立后台进程从现有系统盘恢复，并加入 2 GiB TCG translation block cache、静态 QGA 通道、CDP 转发和测试文件盘。
+  - Windows Boot Manager 已从 qcow2 的 EFI 分区成功启动。
+  - 首次启动遇到 Windows Setup `ChildCompletion` 状态错误；通过 Shift+F10 执行注册表修复成功。
+  - 修复后 Windows 安装恢复运行，当前显示“正在安装 62%”。
+  - 恢复后的安装推进到 94% 并进入 OOBE“请稍等”阶段；输入法状态栏已加载，用户会话正在初始化。
+  - OOBE 期间 QEMU 持续使用约 6–7 个 CPU 核；QGA/CDP 尚未连接，表明首次登录命令仍未开始。
+  - 跳过非阻塞的 `OOBEKEYBOARD` 页面后完成中国区域、本地用户 `sidepad` 和首次桌面初始化。
+  - 真正的 Windows 11 Enterprise Evaluation x64 已进入桌面，屏幕水印显示 Build 26100。
+  - 在来宾系统完成 Sidepad 当前用户安装，确认安装目录、桌面快捷方式和应用进程。
+  - Sidepad 已在 1280×800 的 x64 Windows 桌面展开；实际面板宽度约 538px，符合 42% / 520–680px 的窄面板设计。
+  - 实机界面显示窄图标轨道、地址栏和 Chromium 页面区域，安装后无需外部 Chrome 即可启动。
+  - 确认旧 Sidepad 进程已结束；远程调试启动命令因 QMP 长文本输入分段重复，改用安装目录内的短命令启动。
+  - 从无人值守测试盘启动来宾内 Win32 验证器；首次运行被 FirstLogon 遗留的 Sidepad 安装器对话框干扰，正在清理该残留进程。
+  - 清理后 FirstLogon 自动执行 `E:\payload\verify-sidepad.ps1`；窗口行为检查已返回，控制台仅报告既有 9222 监听导致新的 DevTools HTTP server 无法绑定。
+  - 修正验证器选窗逻辑并生成 900KB 独立验证 ISO；首次热替换后 Windows 未沿用 I: 盘符，阶段标记确认该次脚本实际没有启动。
+  - 使用 HMP 将已知 E: 的测试光盘换片为修正版验证 ISO，并通过执行前截图发现/修复 Run 命令首字母丢失。
+  - 修正版阶段文件写出 `report-written`，最终 Windows x64 报告状态为 `passed`。
+  - Windows 11 Enterprise Evaluation Build 26200 / AMD64 上：边缘展开 554px、收起 0px、CDP ready，边缘唤出与自动隐藏均通过。
+  - 将实机报告转存为 `tests/artifacts/windows-x64-window-report.json`。
+  - 创建可重复的 x64 VM 启动脚本，支持 single、dual-secondary 和 dual-virtio 三种显卡模式。
+  - `VGA + secondary-vga` 可正常进入 Windows 启动；登录后默认 VNC 输出变黑，PCI 枚举确认主 VGA 和第二显示控制器均存在，开始用显式设备 ID 分别抓取输出。
+  - 显式抓取确认 Windows 只接管主 VGA；副 VGA 在登录后仍停留 TianoCore 固件画面，不能用于真实双屏验收。
+  - `virtio-vga,max_outputs=2` 在当前 Windows x64 来宾启动时触发 `IRQL_NOT_LESS_OR_EQUAL (0xA)` 蓝屏，head 1 未激活；该方案排除。
+  - 强制结束蓝屏测试实例后恢复单 VGA，Windows 系统盘重新正常进入锁屏，未发现安装损坏。
+  - 重新执行 `npm run check`、VM 启动脚本 `bash -n` 和 x64 报告 JSON 解析，全部通过。
+  - 将面板与触发条几何提取到 `src/window-layout.js`，增加 100%/150% DPI、最小/最大宽度和双屏接缝单元测试。
+  - `npm test` 全部通过：4 项布局/DPI 单元测试，以及网页、笔记、边缘行为、DOCX、PPTX、XLSX 完整 Electron E2E。
+  - 在 Windows 来宾配置端口代理，并通过宿主机 `19224` 连接真实 x64 Sidepad 的 Electron CDP。
+  - Windows x64 完整内容验收通过：Chromium 本地网页、笔记持久化、TXT、DOCX、PPTX、XLSX，以及边缘展开/收起全部为 true。
+  - 将内容验收证据固化为 `tests/artifacts/windows-x64-content-report.json`。
+- Files created/modified:
+  - `tools/windows-vm/build-validation-fixtures.mjs`
+  - `tools/windows-vm/verify-sidepad-cdp.mjs`
+  - `.windows-vm/sidepad-validation-fixtures.iso`
+  - `tests/artifacts/windows-x64-content-report.json`
+- Remaining:
+  - 在具备两个被 Windows 正常识别输出的真实硬件、Hyper-V 或 VMware 环境中补充真正双显示器验收。
