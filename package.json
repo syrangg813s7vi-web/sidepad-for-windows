@@ -1,0 +1,50 @@
+{
+  "name": "sidepad-for-windows",
+  "version": "0.1.0",
+  "description": "A self-contained, multi-screen, auto-hiding content side panel for Windows.",
+  "main": "src/main.js",
+  "author": "Sidepad",
+  "license": "MIT",
+  "dependencies": {
+    "docx-preview": "^0.4.0",
+    "exceljs": "^4.4.0",
+    "pptx-preview": "^1.0.7"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer/app.js",
+    "dist": "npm run dist:win:x64",
+    "dist:win:x64": "electron-builder --win nsis portable --x64",
+    "dist:win:arm64": "electron-builder --win nsis portable --arm64"
+  },
+  "devDependencies": {
+    "electron": "^43.1.1",
+    "electron-builder": "^26.0.12"
+  },
+  "overrides": {
+    "echarts": "^6.1.0",
+    "uuid": "^11.1.1"
+  },
+  "build": {
+    "appId": "com.sidepad.windows",
+    "productName": "Sidepad",
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

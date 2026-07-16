@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sidepad</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="edge-handle" id="edgeHandle" aria-label="展开 Sidepad">
+      <span></span><span></span><span></span>
+    </div>
+
+    <main class="app-shell" id="appShell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">S</div>
+        </div>
+
+        <button class="add-button" id="addButton">
+          <span>＋</span><em>添加内容</em>
+        </button>
+
+        <nav class="site-list" id="siteList"></nav>
+
+        <div class="sidebar-footer">
+          <button class="icon-text-button" id="manageButton" title="管理内容">••• <span>管理内容</span></button>
+          <button class="icon-text-button" id="collapseButton" title="收起面板">› <span>收起面板</span></button>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="traffic-title">
+            <span class="current-favicon" id="currentFavicon">S</span>
+            <div>
+              <strong id="pageTitle">Sidepad</strong>
+              <small id="pageHost">准备就绪</small>
+            </div>
+          </div>
+          <div class="window-actions">
+            <button id="openExternal" title="在默认浏览器中打开">↗</button>
+            <button id="closeButton" title="退出 Sidepad">×</button>
+          </div>
+        </header>
+
+        <div class="browserbar">
+          <button id="backButton" title="后退">‹</button>
+          <button id="forwardButton" title="前进">›</button>
+          <button id="reloadButton" title="刷新">↻</button>
+          <form class="address-form" id="addressForm">
+            <span>⌕</span>
+            <input id="addressInput" aria-label="网址或搜索内容" autocomplete="off" />
+          </form>
+          <button id="favoriteButton" title="收藏当前网页">☆</button>
+        </div>
+
+        <div class="webview-wrap" id="webviewWrap">
+          <webview id="webview" partition="persist:sidepad" allowpopups></webview>
+          <section class="document-view" id="documentView" hidden>
+            <div class="note-shell" id="noteShell" hidden>
+              <div class="note-meta"><span>自动保存</span><span id="noteCount">0 字</span></div>
+              <textarea id="noteEditor" placeholder="在这里记录想法、资料和待办…"></textarea>
+            </div>
+            <div class="file-preview" id="filePreview" hidden></div>
+          </section>
+          <div class="loading" id="loading"><i></i><span>正在打开网页…</span></div>
+          <div class="welcome" id="welcome">
+            <form class="home-search" id="homeSearch">
+              <span>G</span>
+              <input id="homeSearchInput" placeholder="输入关键词或网址…" autocomplete="off" />
+              <button type="submit">⌕</button>
+            </form>
+            <div class="home-content">
+              <h1>快捷内容</h1>
+              <div class="home-grid" id="homeGrid"></div>
+            </div>
+            <button class="welcome-add" id="welcomeAdd" title="添加内容">＋</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="modal-backdrop" id="modalBackdrop" hidden>
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="modal-close" id="modalClose">×</button>
+        <div class="modal-kicker">ADD TO SIDEPAD</div>
+        <h2 id="modalTitle">添加内容</h2>
+        <p>网页、快速笔记或电脑里的文档，都可以放进侧边栏。</p>
+        <div class="content-types">
+          <button class="content-type active" data-type="web"><b>⌘</b><span>网页<small>Chromium 页面</small></span></button>
+          <button class="content-type" data-type="note"><b>≡</b><span>文本笔记<small>自动保存</small></span></button>
+          <button class="content-type" data-type="file"><b>↑</b><span>本地文件<small>PDF / PPT / 图片</small></span></button>
+        </div>
+        <form id="siteForm">
+          <label>名称<input id="siteName" maxlength="30" placeholder="例如：项目文档" required /></label>
+          <label>网址<input id="siteUrl" type="text" placeholder="https://example.com" required /></label>
+          <div class="form-error" id="formError"></div>
+          <div class="modal-actions">
+            <button type="button" class="secondary" id="cancelButton">取消</button>
+            <button type="submit" class="primary">添加网页</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <script src="../../node_modules/docx-preview/dist/docx-preview.min.js"></script>
+    <script src="../../node_modules/exceljs/dist/exceljs.min.js"></script>
+    <script src="../../node_modules/pptx-preview/dist/pptx-preview.umd.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
