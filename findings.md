@@ -21,7 +21,7 @@
 - 本机实际安装的是 Setapp 版 `Slidepad.app` 1.6.2，Bundle ID 为 `com.slidepad.slidepad-setapp`。
 - Slidepad 是菜单栏后台应用（`LSUIElement=true`），主界面使用 WebKit，并支持 `MultiScreenBehavior`、`MultiScreenFollowMouse`、左右触发位置、悬停显示与自动隐藏。
 - 本机应用资源显示其首页采用内容优先设计：没有宽大的固定导航栏；搜索框为白色半透明圆角浮层，快捷入口为 85×85 圆角卡片，阴影很轻，整体控制项尽量隐藏。
-- 双屏设计应为每块屏幕建立独立触发窗口；相邻显示器接缝只显示中部短触发条，外侧边缘可使用全高触发区，以兼顾可发现性与防误触。
+- 双屏最终策略改为仅在 Windows 主显示器建立触发窗口；主屏右侧为外侧边缘时使用全高 12px 触发区，属于共享接缝时使用居中 320×12px 短触发条。
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -32,7 +32,8 @@
 | 外部文档只存路径 | 不复制或更改原文件，管理方式可预测 |
 | 纯 JavaScript Office 渲染库随安装包交付 | 满足一次安装直接使用，避免外部进程和云服务依赖 |
 | 固定宽侧栏改为窄图标轨道 | 更接近本机 Slidepad 的内容优先和低干扰体验 |
-| 每屏独立触发窗口 | 隐藏状态下仍可从任意显示器唤出，且能跟随鼠标所在屏幕 |
+| 仅主屏创建一个触发窗口 | 行为位置固定、可预测，并避免副屏边缘和普通跨屏移动误触 |
+| PPTX 按可读区域宽度使用 list 模式 | 去除 640px 最小宽度和单页固定高度，窄面板中可连续纵向浏览全部幻灯片 |
 
 ## Issues Encountered
 | Issue | Resolution |
@@ -85,7 +86,7 @@
 - 安装后的 `Sidepad.exe` 运行路径为 `C:\Users\sidepad\AppData\Local\Programs\Sidepad\Sidepad.exe`，来宾报告确认 `PROCESSOR_ARCHITECTURE=AMD64` 且本地 CDP ready。
 - QEMU `VGA + secondary-vga` 能同时创建两个可截图的显卡输出，但 Windows 登录后只接管主 VGA；副输出持续停留在 TianoCore 固件画面，不能算作 Windows 双屏。
 - 未安装匹配显示驱动的 Windows x64 来宾不能直接切换到 `virtio-vga,max_outputs=2`：本次启动触发 `IRQL_NOT_LESS_OR_EQUAL (0xA)`，失败模块显示为 `ntoskrnl.exe`，第二 head 未激活。
-- 当前 QEMU 环境的两个双屏候选都不能提供“两个被 Windows 正常识别的桌面输出”；这属于验证环境限制，不改变 Sidepad 每屏触发窗口的代码实现。最终双屏硬件验收需要 Hyper-V/VMware/真实双显示器或预装匹配 virtio 显示驱动的来宾。
+- 当前 QEMU 环境的两个双屏候选都不能提供“两个被 Windows 正常识别的桌面输出”；后续产品策略已改为仅主屏触发，副屏不触发仍需 Hyper-V/VMware/真实双显示器或预装匹配 virtio 显示驱动的来宾补充验收。
 - Electron 显示器 `workArea` 以 DIP 表示；在 150% 缩放的 1920px 屏幕上，工作区宽度为 1280 DIP，Sidepad 计算为 538 DIP（约 807 物理像素），因此无需按 `scaleFactor` 再手工缩放窗口坐标。
 - 通过来宾内 Windows `portproxy` 将 `0.0.0.0:9223` 转发到 Electron 回环 CDP `127.0.0.1:9222`，再由 QEMU 将宿主机 `19224` 转发到来宾 `9223`，可稳定执行真实 Windows x64 内容自动化验收。
 - Windows x64 CDP 内容报告状态为 `passed`：内置 DOCX/ZIP/Excel/PPTX 运行时均存在；边缘展开、程序化收起、笔记持久化、Chromium 本地网页、TXT、DOCX、PPTX、XLSX 预览全部通过。
@@ -95,6 +96,7 @@
 - Electron webview 只有保留 `allowpopups` 才会把 `window.open` 交给 guest 的 `setWindowOpenHandler`；安全做法是保留标志但在主进程拒绝创建新窗口，仅对白名单 HTTP/HTTPS 地址调用当前 guest 的 `loadURL()`。
 - GitHub Release `v0.1.1` 的安装版和便携版均已上传，GitHub 端 SHA-256 分别为 `3af691…f6bfeb` 与 `d26a2b…7cf58d`，与本地构建一致。
 - 后续迭代已拆为三个 GitHub Issue：#3 PPTX 完整区域连续多页预览、#4 仅主屏激活、#5 扩大边缘激活区域。#5 依赖 #4 的最终主屏触发策略，建议先完成 #4 再处理 #5；#3 可独立开发。
+- Issue #4、#5、#3 已按依赖顺序实现：主进程只选择 Windows 主屏；触发区改为全高或共享接缝 320×12px；PPTX 使用完整可读区域和连续多页 list 布局。
 
 ## Visual/Browser Findings
 - 2026-07-16 本地 1280×820 首次截图显示：侧栏和顶栏视觉正常，但隐藏浏览器地址栏时，工作区仍保留固定网格行，欢迎页被压缩。

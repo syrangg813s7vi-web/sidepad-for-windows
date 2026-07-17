@@ -27,6 +27,9 @@ let items = loadItems();
 let activeId = localStorage.getItem('sidepad.activeId') || items[0]?.id || null;
 let manageMode = false;
 let lastRequestedUrl = '';
+let pptxResizeObserver;
+let pptxResizeTimer;
+let pptxRenderVersion = 0;
 
 function loadItems() {
   try {
@@ -100,6 +103,7 @@ function showOnly(kind) {
 function selectItem(id) {
   const item = items.find(entry => entry.id === id);
   if (!item) return;
+  if (!(item.type === 'file' && item.ext?.toLowerCase() === 'pptx')) resetPptxLayoutWatch();
   activeId = id;
   saveItems();
   renderItems();
@@ -137,6 +141,7 @@ function showWebError(event) {
 }
 
 async function showFile(item) {
+  resetPptxLayoutWatch();
   showOnly('file');
   const available = await window.sidepad.authorizeFile(item.path);
   if (!available) {
@@ -149,6 +154,7 @@ async function showFile(item) {
     return;
   }
   const ext = item.ext.toLowerCase();
+  els.filePreview.classList.toggle('pptx-mode', ext === 'pptx');
   if (textExts.has(ext) && item.content != null) {
     els.filePreview.innerHTML = `<article class="text-document">${escapeHtml(item.content)}</article>`;
   } else if (imageExts.has(ext)) {
@@ -173,9 +179,17 @@ async function showFile(item) {
       const data = await fetch(item.previewUrl).then(response => response.arrayBuffer());
       els.filePreview.innerHTML = '<div class="pptx-stage"></div>';
       const stage = els.filePreview.querySelector('.pptx-stage');
-      const width = Math.min(960, Math.max(640, els.filePreview.clientWidth - 64));
-      const previewer = window.pptxPreview.init(stage, { width, height: Math.round(width * 9 / 16) });
-      await previewer.preview(data);
+      await renderPptx(data, stage);
+      let observedWidth = els.filePreview.clientWidth;
+      pptxResizeObserver = new ResizeObserver(() => {
+        if (!stage.isConnected || Math.abs(els.filePreview.clientWidth - observedWidth) < 8) return;
+        observedWidth = els.filePreview.clientWidth;
+        clearTimeout(pptxResizeTimer);
+        pptxResizeTimer = setTimeout(() => renderPptx(data, stage).catch((error) => {
+          renderOfficeError(item, '无法重新排版这个 PPTX 文件', error);
+        }), 120);
+      });
+      pptxResizeObserver.observe(els.filePreview);
     } catch (error) { renderOfficeError(item, '无法读取这个 PPTX 文件', error); }
   } else if (ext === 'xlsx') {
     els.filePreview.innerHTML = '<div class="office-loading">正在读取工作簿…</div>';
@@ -191,6 +205,29 @@ async function showFile(item) {
     els.filePreview.querySelector('[data-open-file]').onclick = () => window.sidepad.openFile(item.path);
     els.filePreview.querySelector('[data-reveal-file]').onclick = () => window.sidepad.revealFile(item.path);
   }
+}
+
+function resetPptxLayoutWatch() {
+  pptxRenderVersion += 1;
+  clearTimeout(pptxResizeTimer);
+  pptxResizeObserver?.disconnect();
+  pptxResizeObserver = null;
+}
+
+async function renderPptx(data, stage) {
+  const renderVersion = ++pptxRenderVersion;
+  const style = getComputedStyle(stage);
+  const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const width = Math.max(280, Math.floor(stage.clientWidth - horizontalPadding));
+  stage.innerHTML = '';
+  const previewer = window.pptxPreview.init(stage, { width, mode: 'list' });
+  await previewer.preview(data);
+  if (renderVersion !== pptxRenderVersion || !stage.isConnected) {
+    previewer.destroy();
+    return;
+  }
+  stage.dataset.slideCount = String(previewer.slideCount || 0);
+  stage.setAttribute('aria-label', `PPTX，共 ${previewer.slideCount || 0} 页`);
 }
 
 function renderOfficeError(item, title, error) {

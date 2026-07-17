@@ -6,7 +6,6 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const ExcelJS = require('exceljs');
 const { Document, Packer, Paragraph, TextRun } = require('docx');
-const PptxGenJS = require('pptxgenjs');
 
 const root = path.resolve(__dirname, '..');
 const electronBinary = path.join(root, 'node_modules', '.bin', 'electron');
@@ -105,13 +104,10 @@ async function createFixtures() {
   });
   await fs.writeFile(path.join(fixtureDir, 'sample.docx'), await Packer.toBuffer(document));
 
-  const pptx = new PptxGenJS();
-  pptx.layout = 'LAYOUT_WIDE';
-  const slide = pptx.addSlide();
-  slide.background = { color: 'F5F1EA' };
-  slide.addText('Sidepad PPTX QA', { x: 1, y: 1.2, w: 10, h: 0.8, fontSize: 28, bold: true });
-  slide.addText('Self-contained slide preview test.', { x: 1, y: 2.2, w: 10, h: 0.5, fontSize: 16 });
-  await pptx.writeFile({ fileName: path.join(fixtureDir, 'sample.pptx') });
+  await fs.copyFile(
+    path.join(root, 'tests', 'fixtures', 'sample-multipage.pptx'),
+    path.join(fixtureDir, 'sample.pptx'),
+  );
 }
 
 function startFixtureServer() {
@@ -204,7 +200,7 @@ async function run() {
     pptx: typeof window.pptxPreview?.init === 'function'
   })`), { docx: true, zip: true, excel: true, pptx: true }, 'bundled document renderers should load');
 
-  await edge.eval(`window.sidepad.enter(new URLSearchParams(location.search).get('displayId'))`);
+  await edge.eval('window.sidepad.enter()');
   await waitFor(() => main.eval('document.body.classList.contains("expanded")'), 'edge trigger did not expand panel');
   await main.eval('window.sidepad.collapse()');
   await waitFor(async () => !(await main.eval('document.body.classList.contains("expanded")')), 'panel did not collapse');
@@ -244,7 +240,19 @@ async function run() {
 
   for (const [ext, assertion] of [
     ['docx', 'document.querySelector(".docx-stage")?.childElementCount > 0'],
-    ['pptx', 'document.querySelector(".pptx-stage")?.childElementCount > 0'],
+    ['pptx', `(() => {
+      const stage = document.querySelector('.pptx-stage');
+      const preview = document.querySelector('#filePreview');
+      const slides = [...document.querySelectorAll('.pptx-preview-slide-wrapper')];
+      const stageRect = stage?.getBoundingClientRect();
+      const previewRect = preview?.getBoundingClientRect();
+      return stage?.dataset.slideCount === '3'
+        && slides.length === 3
+        && Math.abs(stageRect.width - previewRect.width) < 1
+        && Math.abs(stageRect.height - previewRect.height) < 1
+        && slides.every((slide) => slide.getBoundingClientRect().width <= stage.clientWidth)
+        && stage.scrollHeight > slides[0].clientHeight * 2;
+    })()`],
     ['xlsx', 'document.querySelector(".sheet-table")?.textContent.includes("Sidepad QA")'],
   ]) {
     const filePath = path.join(fixtureDir, `sample.${ext}`);

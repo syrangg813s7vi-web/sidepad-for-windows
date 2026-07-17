@@ -5,7 +5,6 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import ExcelJS from "exceljs";
 import { Document, Packer, Paragraph, TextRun } from "docx";
-import PptxGenJS from "pptxgenjs";
 
 const outputDir = path.resolve(".windows-vm/validation-fixtures");
 const outputIso = path.resolve(".windows-vm/sidepad-validation-fixtures.iso");
@@ -45,28 +44,10 @@ await fs.writeFile(
   await Packer.toBuffer(document),
 );
 
-const presentation = new PptxGenJS();
-presentation.layout = "LAYOUT_WIDE";
-const slide = presentation.addSlide();
-slide.background = { color: "F5F1EA" };
-slide.addText("Sidepad Windows x64 PPTX QA", {
-  x: 1,
-  y: 1.2,
-  w: 10,
-  h: 0.8,
-  fontSize: 28,
-  bold: true,
-});
-slide.addText("Self-contained slide preview test.", {
-  x: 1,
-  y: 2.2,
-  w: 10,
-  h: 0.5,
-  fontSize: 16,
-});
-await presentation.writeFile({
-  fileName: path.join(outputDir, "sample.pptx"),
-});
+await fs.copyFile(
+  path.resolve("tests/fixtures/sample-multipage.pptx"),
+  path.join(outputDir, "sample.pptx"),
+);
 
 await fs.rm(outputIso, { force: true });
 await run("mkisofs", [

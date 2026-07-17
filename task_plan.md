@@ -4,7 +4,7 @@
 交付一个可运行、可打包并发布到 GitHub 的自包含 Windows Sidepad：贴边自动隐藏，可承载 Chromium 网页、文本、图片、PDF 与 PPTX/Office 内容，安装后不依赖外部组件。
 
 ## Current Phase
-Phase 10: 后续迭代 Issue 规划
+Phase 11: 依次实现 Issue #4、#5、#3
 
 ## Phases
 
@@ -90,6 +90,15 @@ Phase 10: 后续迭代 Issue 规划
 - [x] 为每项补充交互要求、验收标准和测试要求
 - **Status:** complete
 
+### Phase 11: 依次实现 Issue #4、#5、#3
+- [x] Issue #4：仅在 Windows 主显示器创建触发区和展开面板
+- [x] Issue #5：扩大主屏边缘触发区并覆盖 DPI 几何测试
+- [x] Issue #3：PPTX 使用完整内容区连续展示多页
+- [x] 同步设计文档、设计—代码对应表和自动化测试
+- [x] Windows x64 构建与回归验证
+- [ ] 提交、合入并更新三个 GitHub Issue
+- **Status:** in_progress
+
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。
 2. PPT 如何在面板内显示？将纯 JavaScript PPTX 渲染器打进安装包；现代 PPTX 内嵌预览，不要求 PowerPoint。旧 `.ppt` 不具备同等的浏览器端开源渲染路径，需明确提示转换。
@@ -151,6 +160,10 @@ Phase 10: 后续迭代 Issue 规划
 | 连续执行 Windows CDP 公网测试时边缘 target 在 WebSocket 建连前消失 | 1 | 记录为测试环境 target 生命周期问题；下一次测试重新读取目标并避免复用已销毁页面 ID |
 | 网页错误测试未观察到失败页 | 1 | 单次断连被 Chromium 自动重试掩盖；夹具改为持续失败，观察错误页后再显式恢复服务 |
 | `target=_blank` 测试未在当前 webview 导航 | 1 | 没有 `allowpopups` 时 Chromium 在主进程 handler 前拦截；恢复标志并继续由 `setWindowOpenHandler` 白名单拒绝新窗口、改为当前页加载 |
+| PPTX 多页测试留下空预览容器 | 1 | 监听内部 stage 时滚动条宽度变化触发并发重排；改为监听尺寸稳定的外层 `filePreview`，只在真实内容区宽度变化时重排 |
+| 三页 PPTX 测试文件被 `pptx-preview` 解析为 0 页 | 1 | 库内部吞掉具体解析异常；先用最小三页文件隔离连续布局测试，再逐项加回文本内容定位兼容触发项 |
+| Web 工具拒绝直接打开 `501351981.github.io` 演示地址 | 1 | 改用限定官方 GitHub Pages 域名的搜索查询定位可下载样例，不重复直接 open |
+| 使用 `/Applications/LibreOffice.app/.../soffice` 归一化测试 PPTX 时路径不存在 | 1 | `command -v soffice` 已返回工作区依赖运行时路径；后续使用该实际路径，不重复假设 Applications 安装位置 |
 
 ## Notes
 - 每个阶段结束后同步更新本文件、`findings.md` 和 `progress.md`。

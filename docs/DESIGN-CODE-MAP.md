@@ -8,10 +8,10 @@
 | 展开/收起动画 180ms | `src/main.js`：`ANIMATION_MS`、`animateTo()` | 录屏或计时检查 |
 | 鼠标离开 650ms 收起 | `src/main.js`：`scheduleCollapse()` | 鼠标离开内容区 |
 | 失焦 480ms 收起 | `src/main.js`：`mainWindow.on('blur')` | 切换到其他窗口 |
-| 触发条宽 8px | `src/window-layout.js`：`calculateTriggerBounds()` | 布局单元测试 |
+| 触发条宽 12px | `src/window-layout.js`：`calculateTriggerBounds()` | 布局单元测试 |
 | 触发防误触 140ms | `src/renderer/edge.html` | 快速跨过边缘不展开 |
-| 双屏每屏独立触发 | `src/main.js`：`triggerWindows`、`rebuildTriggerWindows()` | 双屏分别触发 |
-| 共享接缝只显示 180px 短触发条 | `src/window-layout.js`：`hasDisplayOnRight()`、`calculateTriggerBounds()` | 左右排列双屏布局单元测试 |
+| 仅 Windows 主屏激活 | `src/main.js`：`getPrimaryDisplay()`、`rebuildTriggerWindows()`；`src/window-layout.js`：`selectPrimaryDisplay()` | 主屏选择单元测试；双屏确认仅创建一个触发窗口 |
+| 共享接缝只显示 320×12px 短触发条 | `src/window-layout.js`：`hasDisplayOnRight()`、`calculateTriggerBounds()` | 左右排列双屏和小高度布局单元测试 |
 | 62px 内容轨道 | `src/renderer/styles.css`：compact mode `.app-shell` | 截图像素检查 |
 | 34px 品牌按钮、40px 添加按钮、44px 内容入口 | `src/renderer/styles.css` | 首页视觉回归 |
 | 胶囊搜索和快捷卡片首页 | `src/renderer/index.html`、`styles.css`、`app.js` | `sidepad-preview.png` |
@@ -22,6 +22,7 @@
 | 笔记自动保存 | `src/renderer/app.js`：`noteEditor` input 事件 | 输入后重启应用 |
 | PDF/图片/文本内嵌预览 | `src/main.js` 文件描述、`app.js`：`showFile()` | 添加样例文件 |
 | PPTX/DOCX/XLSX 自包含预览 | `index.html` 内置脚本、`app.js`：`showFile()` | 无 Office 环境打开样例 |
+| PPTX 使用完整内容区连续展示多页 | `src/renderer/app.js`：`renderPptx()`；`styles.css`：`.pptx-stage` | 三页 PPTX E2E 检查页数、宽度、滚动高度与无横向裁切 |
 | 文件拖放添加 | `src/preload.js`、`app.js` drop 事件 | 拖放多个文件 |
 | 本地文件白名单协议 | `src/main.js`：`sidepad-local`、`allowedFiles` | 未授权路径返回 403 |
 | 渲染进程隔离 | `src/main.js`：`contextIsolation`、`nodeIntegration` | 安全配置检查 |

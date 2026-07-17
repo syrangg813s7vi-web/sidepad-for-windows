@@ -7,6 +7,7 @@ const {
   calculatePanelBounds,
   calculateTriggerBounds,
   hasDisplayOnRight,
+  selectPrimaryDisplay,
 } = require('./window-layout');
 
 const ANIMATION_MS = 180;
@@ -16,7 +17,6 @@ let mainWindow;
 let isExpanded = false;
 let collapseTimer;
 let animationFrame;
-let activeDisplayId;
 const triggerWindows = new Map();
 const allowedFiles = new Set();
 
@@ -38,14 +38,13 @@ if (process.platform === 'win32') app.setAppUserModelId(WINDOWS_APP_ID);
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) app.quit();
 
-function getDisplay(displayId) {
-  return screen.getAllDisplays().find((display) => String(display.id) === String(displayId))
-    || screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
-    || screen.getPrimaryDisplay();
+function getPrimaryDisplay() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  return selectPrimaryDisplay(screen.getAllDisplays(), primaryDisplay.id) || primaryDisplay;
 }
 
-function panelBounds(displayId, expanded) {
-  const display = getDisplay(displayId);
+function panelBounds(expanded) {
+  const display = getPrimaryDisplay();
   return calculatePanelBounds(display.workArea, expanded);
 }
 
@@ -76,20 +75,18 @@ function animateTo(target, done) {
   }, 16);
 }
 
-function expandPanel({ focus = true, displayId } = {}) {
+function expandPanel({ focus = true } = {}) {
   clearTimeout(collapseTimer);
-  const targetDisplay = getDisplay(displayId);
   if (isExpanded) {
     if (focus) mainWindow?.focus();
     return;
   }
-  activeDisplayId = targetDisplay.id;
   isExpanded = true;
-  mainWindow.setBounds(panelBounds(activeDisplayId, false));
+  mainWindow.setBounds(panelBounds(false));
   mainWindow.showInactive();
   mainWindow.setOpacity(1);
   mainWindow.webContents.send('panel-state', { expanded: true });
-  animateTo(panelBounds(activeDisplayId, true), () => {
+  animateTo(panelBounds(true), () => {
     if (focus) mainWindow.focus();
   });
 }
@@ -99,7 +96,7 @@ function collapsePanel() {
   if (!isExpanded || !mainWindow || mainWindow.isDestroyed()) return;
   isExpanded = false;
   mainWindow.webContents.send('panel-state', { expanded: false });
-  animateTo(panelBounds(activeDisplayId, false), () => mainWindow.hide());
+  animateTo(panelBounds(false), () => mainWindow.hide());
 }
 
 function scheduleCollapse(delay = 650) {
@@ -108,8 +105,7 @@ function scheduleCollapse(delay = 650) {
 }
 
 function createWindow() {
-  activeDisplayId = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).id;
-  const bounds = panelBounds(activeDisplayId, false);
+  const bounds = panelBounds(false);
   mainWindow = new BrowserWindow({
     ...bounds,
     minWidth: MIN_PANEL_WIDTH,
@@ -176,7 +172,7 @@ function createTriggerWindow(display, sharedEdge) {
     },
   });
   trigger.loadFile(path.join(__dirname, 'renderer', 'edge.html'), {
-    query: { displayId: String(display.id), shared: sharedEdge ? '1' : '0' },
+    query: { shared: sharedEdge ? '1' : '0' },
   });
   trigger.once('ready-to-show', () => trigger.showInactive());
   trigger.on('closed', () => triggerWindows.delete(String(display.id)));
@@ -189,10 +185,11 @@ function rebuildTriggerWindows() {
   }
   triggerWindows.clear();
   const displays = screen.getAllDisplays();
-  displays.forEach((display) => createTriggerWindow(display, hasDisplayOnRight(display, displays)));
+  const primaryDisplay = getPrimaryDisplay();
+  createTriggerWindow(primaryDisplay, hasDisplayOnRight(primaryDisplay, displays));
 }
 
-ipcMain.on('panel-enter', (_, displayId) => expandPanel({ focus: true, displayId }));
+ipcMain.on('panel-enter', () => expandPanel({ focus: true }));
 ipcMain.on('panel-leave', () => scheduleCollapse());
 ipcMain.on('panel-stay', () => clearTimeout(collapseTimer));
 ipcMain.on('panel-collapse', () => collapsePanel());
@@ -250,21 +247,18 @@ app.whenReady().then(() => {
   });
   createWindow();
   rebuildTriggerWindows();
-  screen.on('display-added', rebuildTriggerWindows);
-  screen.on('display-metrics-changed', () => {
+  const refreshPrimaryDisplay = () => {
     rebuildTriggerWindows();
-    if (isExpanded) animateTo(panelBounds(activeDisplayId, true));
-  });
-  screen.on('display-removed', () => {
-    rebuildTriggerWindows();
-    const display = getDisplay(activeDisplayId);
-    activeDisplayId = display.id;
-    if (isExpanded) animateTo(panelBounds(activeDisplayId, true));
-  });
+    if (isExpanded) animateTo(panelBounds(true));
+    else if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setBounds(panelBounds(false));
+  };
+  screen.on('display-added', refreshPrimaryDisplay);
+  screen.on('display-metrics-changed', refreshPrimaryDisplay);
+  screen.on('display-removed', refreshPrimaryDisplay);
 });
 
 app.on('window-all-closed', () => app.quit());
 app.on('second-instance', () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  expandPanel({ focus: true, displayId: screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).id });
+  expandPanel({ focus: true });
 });
