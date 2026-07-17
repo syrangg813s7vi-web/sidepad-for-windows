@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-07-16T18:32:46.275Z",
+  "cdp_port": 19224,
+  "checks": {
+    "renderers": {
+      "docx": true,
+      "zip": true,
+      "excel": true,
+      "pptx": true
+    },
+    "edge_expand": true,
+    "programmatic_collapse": true,
+    "note_persistence": "Updated note on Windows x64",
+    "chromium_webview": true,
+    "txt_preview": true,
+    "docx_preview": true,
+    "pptx_preview": true,
+    "xlsx_preview": true
+  },
+  "fixture_drive": "D",
+  "guest_report": null,
+  "status": "passed"
+}

@@ -1,5 +1,8 @@
 node_modules/
 dist/
+dist-arm64/
+.playwright-cli/
+.windows-vm/
 out/
 *.log
 .DS_Store

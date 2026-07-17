@@ -4,14 +4,14 @@
 
 | 设计要求 | 代码位置 | 验证方式 |
 |----------|----------|----------|
-| 面板最大宽度 1040px、最小 760px、显示器宽度约 64% | `src/main.js`：`PANEL_WIDTH`、`MIN_PANEL_WIDTH`、`panelBounds()` | 在不同分辨率显示器展开 |
+| 面板最大宽度 680px、最小 520px、显示器宽度约 42% | `src/window-layout.js`：`calculatePanelBounds()` | `tests/window-layout.test.js` 的分辨率与 150% DPI 测试 |
 | 展开/收起动画 180ms | `src/main.js`：`ANIMATION_MS`、`animateTo()` | 录屏或计时检查 |
 | 鼠标离开 650ms 收起 | `src/main.js`：`scheduleCollapse()` | 鼠标离开内容区 |
 | 失焦 480ms 收起 | `src/main.js`：`mainWindow.on('blur')` | 切换到其他窗口 |
-| 触发条宽 8px | `src/main.js`：`EDGE_WIDTH` | 检查每屏触发窗口边界 |
+| 触发条宽 8px | `src/window-layout.js`：`calculateTriggerBounds()` | 布局单元测试 |
 | 触发防误触 140ms | `src/renderer/edge.html` | 快速跨过边缘不展开 |
 | 双屏每屏独立触发 | `src/main.js`：`triggerWindows`、`rebuildTriggerWindows()` | 双屏分别触发 |
-| 共享接缝只显示 180px 短触发条 | `src/main.js`：`hasDisplayOnRight()`、`createTriggerWindow()` | 左右排列双屏跨屏测试 |
+| 共享接缝只显示 180px 短触发条 | `src/window-layout.js`：`hasDisplayOnRight()`、`calculateTriggerBounds()` | 左右排列双屏布局单元测试 |
 | 62px 内容轨道 | `src/renderer/styles.css`：compact mode `.app-shell` | 截图像素检查 |
 | 34px 品牌按钮、40px 添加按钮、44px 内容入口 | `src/renderer/styles.css` | 首页视觉回归 |
 | 胶囊搜索和快捷卡片首页 | `src/renderer/index.html`、`styles.css`、`app.js` | `sidepad-preview.png` |
@@ -34,4 +34,3 @@
 3. 删除功能必须同时删除设计描述和验证项。
 4. 发布前执行 `npm run check`、`npm audit` 和 Windows x64 构建。
 5. Windows x64 是默认正式交付目标；ARM64 是附加目标。
-

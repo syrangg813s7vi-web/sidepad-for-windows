@@ -2,10 +2,13 @@ const { app, BrowserWindow, dialog, ipcMain, net, protocol, screen, shell } = re
 const path = require('path');
 const fs = require('fs/promises');
 const { pathToFileURL } = require('url');
+const {
+  MIN_PANEL_WIDTH,
+  calculatePanelBounds,
+  calculateTriggerBounds,
+  hasDisplayOnRight,
+} = require('./window-layout');
 
-const PANEL_WIDTH = 1040;
-const MIN_PANEL_WIDTH = 760;
-const EDGE_WIDTH = 8;
 const ANIMATION_MS = 180;
 const WINDOWS_APP_ID = 'com.sidepad.windows';
 
@@ -18,7 +21,16 @@ const triggerWindows = new Map();
 const allowedFiles = new Set();
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'sidepad-local', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
+  {
+    scheme: 'sidepad-local',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+    },
+  },
 ]);
 
 if (process.platform === 'win32') app.setAppUserModelId(WINDOWS_APP_ID);
@@ -34,14 +46,7 @@ function getDisplay(displayId) {
 
 function panelBounds(displayId, expanded) {
   const display = getDisplay(displayId);
-  const { x, y, width, height } = display.workArea;
-  const panelWidth = Math.min(PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, Math.round(width * 0.64)));
-  return {
-    x: x + width - (expanded ? panelWidth : 0),
-    y,
-    width: panelWidth,
-    height,
-  };
+  return calculatePanelBounds(display.workArea, expanded);
 }
 
 function animateTo(target, done) {
@@ -139,28 +144,10 @@ function createWindow() {
   });
 }
 
-function hasDisplayOnRight(display, allDisplays) {
-  const right = display.bounds.x + display.bounds.width;
-  return allDisplays.some((other) => {
-    if (other.id === display.id || other.bounds.x !== right) return false;
-    const top = Math.max(display.bounds.y, other.bounds.y);
-    const bottom = Math.min(
-      display.bounds.y + display.bounds.height,
-      other.bounds.y + other.bounds.height,
-    );
-    return bottom > top;
-  });
-}
-
 function createTriggerWindow(display, sharedEdge) {
-  const handleHeight = sharedEdge ? Math.min(180, display.workArea.height) : display.workArea.height;
+  const bounds = calculateTriggerBounds(display, sharedEdge);
   const trigger = new BrowserWindow({
-    x: display.workArea.x + display.workArea.width - EDGE_WIDTH,
-    y: sharedEdge
-      ? display.workArea.y + Math.round((display.workArea.height - handleHeight) / 2)
-      : display.workArea.y,
-    width: EDGE_WIDTH,
-    height: handleHeight,
+    ...bounds,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',

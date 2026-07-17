@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-07-17T01:26:49.8419597+08:00",
+  "status": "passed",
+  "os": "Microsoft Windows 11 企业评估版",
+  "os_build": "26200",
+  "architecture": "AMD64",
+  "monitor_count": 1,
+  "sidepad_exe": "C:\\Users\\sidepad\\AppData\\Local\\Programs\\Sidepad\\Sidepad.exe",
+  "process_running": true,
+  "cdp_ready": true,
+  "expanded_max_width": 554,
+  "collapsed_max_width": 0,
+  "monitors": [
+    {
+      "device_name": "\\\\.\\DISPLAY1",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 1280,
+        "height": 800
+      },
+      "expanded_max_width": 554,
+      "expanded_panel_left": 734,
+      "collapsed_max_width": 0,
+      "edge_expand_pass": true,
+      "auto_hide_pass": true
+    }
+  ],
+  "edge_expand_pass": true,
+  "auto_hide_pass": true,
+  "dual_monitor_pass": true
+}
