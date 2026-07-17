@@ -4,7 +4,7 @@
 交付一个可运行、可打包并发布到 GitHub 的自包含 Windows Sidepad：贴边自动隐藏，可承载 Chromium 网页、文本、图片、PDF 与 PPTX/Office 内容，安装后不依赖外部组件。
 
 ## Current Phase
-Phase 9: 网页加载故障修复
+Phase 10: 后续迭代 Issue 规划
 
 ## Phases
 
@@ -81,6 +81,13 @@ Phase 9: 网页加载故障修复
 - [x] 处理网页内 `target=_blank` / `window.open` 导航
 - [x] 增加失败、重试和弹窗导航自动化测试
 - [x] 重新构建并发布修复版本
+- **Status:** complete
+
+### Phase 10: 后续迭代 Issue 规划
+- [x] 创建 PPTX 完整可读区域与多页连续预览 Issue #3
+- [x] 创建仅允许 Windows 主屏激活 Issue #4
+- [x] 创建扩大边缘激活区域 Issue #5
+- [x] 为每项补充交互要求、验收标准和测试要求
 - **Status:** complete
 
 ## Key Questions

@@ -94,6 +94,7 @@
 - 当前网页容器没有监听 `did-fail-load`，加载失败时只会停留在遮罩或空白页；同时没有处理 webview 的 `new-window`，依赖 `target=_blank` 或 `window.open` 的链接可能表现为“点击没反应”。
 - Electron webview 只有保留 `allowpopups` 才会把 `window.open` 交给 guest 的 `setWindowOpenHandler`；安全做法是保留标志但在主进程拒绝创建新窗口，仅对白名单 HTTP/HTTPS 地址调用当前 guest 的 `loadURL()`。
 - GitHub Release `v0.1.1` 的安装版和便携版均已上传，GitHub 端 SHA-256 分别为 `3af691…f6bfeb` 与 `d26a2b…7cf58d`，与本地构建一致。
+- 后续迭代已拆为三个 GitHub Issue：#3 PPTX 完整区域连续多页预览、#4 仅主屏激活、#5 扩大边缘激活区域。#5 依赖 #4 的最终主屏触发策略，建议先完成 #4 再处理 #5；#3 可独立开发。
 
 ## Visual/Browser Findings
 - 2026-07-16 本地 1280×820 首次截图显示：侧栏和顶栏视觉正常，但隐藏浏览器地址栏时，工作区仍保留固定网格行，欢迎页被压缩。

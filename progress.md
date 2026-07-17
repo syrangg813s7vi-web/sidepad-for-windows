@@ -216,3 +216,11 @@
   - 构建 `v0.1.1` Windows x64 安装版与便携版成功，解包主程序为 PE32+ x86-64。
   - PR #2 以 merge commit `c1afa37` 合入 `main`。
   - 发布 GitHub Release `v0.1.1`，安装版、便携版和校验文件均为 `uploaded`，远端摘要与本地一致。
+
+### Phase 10: 后续迭代 Issue 规划
+- **Status:** complete
+- Actions taken:
+  - 创建 Issue #3：PPTX 预览覆盖完整可读区域并连续展示多页。
+  - 创建 Issue #4：Sidepad 仅在 Windows 主显示器提供激活入口。
+  - 创建 Issue #5：将边缘触发区由当前约 180×8px 提升到建议约 320×12px，并通过 DPI/误触测试确定最终值。
+  - 每个 Issue 均包含背景、目标、交互要求、验收标准和自动化测试要求。
