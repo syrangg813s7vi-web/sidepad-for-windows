@@ -62,11 +62,11 @@ Phase 7: 合入与 Release 发布
 - **Status:** complete（真正双显示器硬件验收仍受当前 QEMU 显示驱动限制）
 
 ### Phase 7: 合入与 Release 发布
-- [ ] 重新执行完整测试并构建 Windows x64 安装版与便携版
-- [ ] 将 PR #1 合入 `main`
-- [ ] 创建带 SHA-256 校验文件的 GitHub Release `v0.1.0`
-- [ ] 验证 Release 附件可通过 GitHub 下载
-- **Status:** in_progress
+- [x] 重新执行完整测试并构建 Windows x64 安装版与便携版
+- [x] 将 PR #1 合入 `main`
+- [x] 创建带 SHA-256 校验文件的 GitHub Release `v0.1.0`
+- [x] 验证 Release 附件可通过 GitHub 下载
+- **Status:** complete
 
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。

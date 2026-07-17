@@ -89,6 +89,7 @@
 - Electron 显示器 `workArea` 以 DIP 表示；在 150% 缩放的 1920px 屏幕上，工作区宽度为 1280 DIP，Sidepad 计算为 538 DIP（约 807 物理像素），因此无需按 `scaleFactor` 再手工缩放窗口坐标。
 - 通过来宾内 Windows `portproxy` 将 `0.0.0.0:9223` 转发到 Electron 回环 CDP `127.0.0.1:9222`，再由 QEMU 将宿主机 `19224` 转发到来宾 `9223`，可稳定执行真实 Windows x64 内容自动化验收。
 - Windows x64 CDP 内容报告状态为 `passed`：内置 DOCX/ZIP/Excel/PPTX 运行时均存在；边缘展开、程序化收起、笔记持久化、Chromium 本地网页、TXT、DOCX、PPTX、XLSX 预览全部通过。
+- GitHub Release `v0.1.0` 已发布，包含约 109 MB 的 x64 安装版、约 109 MB 的 x64 便携版和 SHA-256 校验文件；GitHub 返回的两个 EXE 资产状态均为 `uploaded`，摘要与本机构建一致。
 
 ## Visual/Browser Findings
 - 2026-07-16 本地 1280×820 首次截图显示：侧栏和顶栏视觉正常，但隐藏浏览器地址栏时，工作区仍保留固定网格行，欢迎页被压缩。

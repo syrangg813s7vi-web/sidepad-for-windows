@@ -184,8 +184,13 @@
   - 在具备两个被 Windows 正常识别输出的真实硬件、Hyper-V 或 VMware 环境中补充真正双显示器验收。
 
 ### Phase 7: 合入与 Release 发布
-- **Status:** in_progress
+- **Status:** complete
 - Actions taken:
   - 确认 PR #1 仍为可合入的草稿，目标分支为 `main`。
   - 确认项目版本为 `0.1.0`，Release 标签采用 `v0.1.0`。
   - 确认 GitHub CLI 已登录且仓库为私有仓库。
+  - 重新执行 `npm test`，语法、4 项布局/DPI 测试和完整 Electron E2E 全部通过。
+  - 重新构建 Windows x64 NSIS 安装版和便携版；解包后的 `Sidepad.exe` 确认为 PE32+ x86-64。
+  - 将 PR #1 转为 ready 并以 merge commit `dc46ef0` 合入 `main`。
+  - 发布正式 GitHub Release `v0.1.0`，上传安装版、便携版和 `SHA256SUMS.txt`。
+  - 通过 GitHub Release API 核对三个附件均为 `uploaded`，EXE 大小和 SHA-256 摘要与本机构建一致。
