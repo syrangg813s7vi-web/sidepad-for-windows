@@ -142,6 +142,17 @@ function createWindow() {
     if (/^https?:\/\//i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
+
+  mainWindow.webContents.on('did-attach-webview', (_, guest) => {
+    const chromiumUserAgent = guest.getUserAgent()
+      .replace(/\sElectron\/\S+/g, '')
+      .replace(/\sSidepad\/\S+/g, '');
+    guest.setUserAgent(chromiumUserAgent);
+    guest.setWindowOpenHandler(({ url }) => {
+      if (/^https?:\/\//i.test(url)) void guest.loadURL(url).catch(() => {});
+      return { action: 'deny' };
+    });
+  });
 }
 
 function createTriggerWindow(display, sharedEdge) {

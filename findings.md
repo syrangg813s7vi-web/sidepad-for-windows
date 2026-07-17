@@ -90,6 +90,9 @@
 - 通过来宾内 Windows `portproxy` 将 `0.0.0.0:9223` 转发到 Electron 回环 CDP `127.0.0.1:9222`，再由 QEMU 将宿主机 `19224` 转发到来宾 `9223`，可稳定执行真实 Windows x64 内容自动化验收。
 - Windows x64 CDP 内容报告状态为 `passed`：内置 DOCX/ZIP/Excel/PPTX 运行时均存在；边缘展开、程序化收起、笔记持久化、Chromium 本地网页、TXT、DOCX、PPTX、XLSX 预览全部通过。
 - GitHub Release `v0.1.0` 已发布，包含约 109 MB 的 x64 安装版、约 109 MB 的 x64 便携版和 SHA-256 校验文件；GitHub 返回的两个 EXE 资产状态均为 `uploaded`，摘要与本机构建一致。
+- 用户报告看板内网页打不开后，在已安装的 Windows x64 `v0.1.0` 中通过 CDP 直接加载 `https://www.baidu.com` 成功，证明 Chromium、HTTPS/TLS 和基本网络链路可用。
+- 当前网页容器没有监听 `did-fail-load`，加载失败时只会停留在遮罩或空白页；同时没有处理 webview 的 `new-window`，依赖 `target=_blank` 或 `window.open` 的链接可能表现为“点击没反应”。
+- Electron webview 只有保留 `allowpopups` 才会把 `window.open` 交给 guest 的 `setWindowOpenHandler`；安全做法是保留标志但在主进程拒绝创建新窗口，仅对白名单 HTTP/HTTPS 地址调用当前 guest 的 `loadURL()`。
 
 ## Visual/Browser Findings
 - 2026-07-16 本地 1280×820 首次截图显示：侧栏和顶栏视觉正常，但隐藏浏览器地址栏时，工作区仍保留固定网格行，欢迎页被压缩。

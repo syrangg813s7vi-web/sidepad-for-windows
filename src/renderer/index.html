@@ -65,6 +65,15 @@
             <div class="file-preview" id="filePreview" hidden></div>
           </section>
           <div class="loading" id="loading"><i></i><span>正在打开网页…</span></div>
+          <section class="web-error" id="webError" hidden>
+            <div class="web-error-icon">!</div>
+            <h2 id="webErrorTitle">网页无法打开</h2>
+            <p id="webErrorDetail">请检查网络连接或网址后重试。</p>
+            <div class="web-error-actions">
+              <button id="webRetryButton" type="button">重新加载</button>
+              <button id="webErrorExternal" type="button">在默认浏览器中打开</button>
+            </div>
+          </section>
           <div class="welcome" id="welcome">
             <form class="home-search" id="homeSearch">
               <span>G</span>

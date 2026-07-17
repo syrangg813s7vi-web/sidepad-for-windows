@@ -202,3 +202,15 @@
   - 重构 README，增加下载表格、截图、支持格式、基本操作、验证状态和已知限制。
   - 新增可纳入版本控制的 `docs/RELEASE-NOTES-v0.1.0.md`，作为 GitHub Release Note 的单一来源。
   - 使用该 Markdown 文件更新 GitHub Release `v0.1.0`，复核标题、段落、表格、列表和 SHA-256 代码块均已正常呈现。
+
+### Phase 9: 网页加载故障修复
+- **Status:** in_progress
+- Actions taken:
+  - 在已安装的 Windows x64 `v0.1.0` 中加载百度 HTTPS 页面成功。
+  - 确认现有 E2E 只覆盖成功加载本地 HTTP 页面，未覆盖导航失败和新窗口链接。
+  - 确认渲染器未监听 `did-fail-load` 与 `new-window`，用户在失败或弹窗式导航时得不到有效反馈。
+  - 首次错误恢复测试被 Chromium 的自动重试机制掩盖；已将夹具调整为显式控制故障窗口。
+  - 错误反馈与重试测试通过；新窗口测试确认需要保留 `allowpopups` 才能进入主进程的安全导航处理器。
+  - 完成错误页、重新加载、外部浏览器入口、当前页弹窗导航和 Chromium User-Agent 兼容处理。
+  - `npm test` 全部通过，新增失败恢复、弹窗导航和 User-Agent 断言；`npm audit` 为 0 vulnerabilities。
+  - 构建 `v0.1.1` Windows x64 安装版与便携版成功，解包主程序为 PE32+ x86-64。

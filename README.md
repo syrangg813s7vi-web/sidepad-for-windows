@@ -8,13 +8,13 @@
 
 ## 下载
 
-当前版本：`v0.1.0`，适用于 Windows 10/11 x64。
+当前版本：`v0.1.1`，适用于 Windows 10/11 x64。
 
 | 版本 | 适用场景 | 下载 |
 |------|----------|------|
-| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.1.0 x64](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/Sidepad.Setup.0.1.0.exe) |
-| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.1.0 x64 Portable](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/Sidepad.0.1.0.exe) |
-| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/SHA256SUMS.txt) |
+| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.1.1 x64](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.1/Sidepad.Setup.0.1.1.exe) |
+| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.1.1 x64 Portable](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.1/Sidepad.0.1.1.exe) |
+| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.1/SHA256SUMS.txt) |
 
 安装包自带 Chromium 和文档预览运行时，不需要另外安装 Chrome、Microsoft Office 或 LibreOffice。
 
@@ -29,6 +29,7 @@
 - 拖入本地文件并在面板中快速查看。
 - 支持双屏/多屏独立触发，面板跟随鼠标所在屏幕。
 - 提供后退、前进、刷新、地址栏和系统浏览器打开入口。
+- 网页加载失败时显示原因，并可直接重试或改用系统浏览器。
 
 ## 支持的内容
 
@@ -81,7 +82,7 @@ npm run dist:win:x64
 
 ## 验证状态
 
-`v0.1.0` 已在 Windows 11 Enterprise Evaluation x64 虚拟机完成以下验证：
+`v0.1.1` 的基础功能沿用 Windows 11 Enterprise Evaluation x64 验收结果，并新增网页失败恢复与新窗口导航自动化测试：
 
 - 边缘唤醒和自动隐藏。
 - Chromium 网页加载和笔记持久化。

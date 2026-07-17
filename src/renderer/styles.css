@@ -106,6 +106,14 @@ webview.active { display: flex; }
 .loading.visible { display: flex; }
 .loading i { width: 17px; height: 17px; border: 2px solid #d5d1f9; border-top-color: #6f5bf1; border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.web-error { position: absolute; z-index: 5; inset: 0; display: grid; place-content: center; justify-items: center; padding: 36px; color: #35312d; background: #f7f5f1; text-align: center; }
+.web-error[hidden] { display: none; }
+.web-error-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; color: #fff; background: #d55d54; font-size: 24px; font-weight: 750; box-shadow: 0 10px 25px rgba(180, 62, 55, .2); }
+.web-error h2 { margin: 18px 0 7px; font-size: 18px; }
+.web-error p { max-width: 430px; margin: 0; color: #817b74; line-height: 1.6; }
+.web-error-actions { display: flex; justify-content: center; gap: 9px; margin-top: 22px; }
+.web-error-actions button { padding: 9px 14px; border: 1px solid rgba(55, 50, 45, .12); border-radius: 9px; color: #57514b; background: rgba(255,255,255,.7); cursor: pointer; }
+.web-error-actions button:first-child { border-color: #7061e8; color: #fff; background: #7061e8; }
 
 .document-view { position: absolute; inset: 0; color: #20232d; background: #f6f6f8; }
 .document-view[hidden], .note-shell[hidden], .file-preview[hidden] { display: none; }

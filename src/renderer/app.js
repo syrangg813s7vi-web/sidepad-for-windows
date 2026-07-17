@@ -11,11 +11,12 @@ const els = Object.fromEntries([
   'webview','welcome','loading','pageTitle','pageHost','currentFavicon','addressForm','addressInput',
   'backButton','forwardButton','reloadButton','favoriteButton','openExternal','modalBackdrop',
   'modalClose','cancelButton','siteForm','siteName','siteUrl','formError','documentView','noteShell',
-  'noteEditor','noteCount','filePreview','homeSearch','homeSearchInput','homeGrid'
+  'noteEditor','noteCount','filePreview','homeSearch','homeSearchInput','homeGrid',
+  'webError','webErrorTitle','webErrorDetail','webRetryButton','webErrorExternal',
 ].map(id => [id, $(`#${id}`)]));
 
 const defaults = [
-  { id: crypto.randomUUID(), type: 'web', name: 'Google', url: 'https://www.google.com', color: '#4285f4' },
+  { id: crypto.randomUUID(), type: 'web', name: 'Bing', url: 'https://www.bing.com', color: '#258ffa' },
   { id: crypto.randomUUID(), type: 'web', name: 'ChatGPT', url: 'https://chatgpt.com', color: '#0b9f81' },
   { id: crypto.randomUUID(), type: 'note', name: '随手记录', content: '', color: '#8b7dff' },
 ];
@@ -25,6 +26,7 @@ const imageExts = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']);
 let items = loadItems();
 let activeId = localStorage.getItem('sidepad.activeId') || items[0]?.id || null;
 let manageMode = false;
+let lastRequestedUrl = '';
 
 function loadItems() {
   try {
@@ -44,7 +46,7 @@ function saveItems() {
 function normalizeUrl(value) {
   const raw = value.trim();
   if (!raw) return null;
-  if (/\s/.test(raw) || (!raw.includes('.') && !raw.startsWith('http'))) return `https://www.google.com/search?q=${encodeURIComponent(raw)}`;
+  if (/\s/.test(raw) || (!raw.includes('.') && !raw.startsWith('http'))) return `https://www.bing.com/search?q=${encodeURIComponent(raw)}`;
   try {
     const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
     return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
@@ -92,6 +94,7 @@ function showOnly(kind) {
   document.querySelector('.workspace').classList.toggle('document-mode', kind !== 'web');
   document.querySelector('.workspace').classList.toggle('home-mode', kind === 'welcome');
   if (kind !== 'web') els.loading.classList.remove('visible');
+  if (kind !== 'web') els.webError.hidden = true;
 }
 
 function selectItem(id) {
@@ -117,8 +120,20 @@ function navigate(url) {
   const normalized = normalizeUrl(url);
   if (!normalized) return;
   showOnly('web');
+  lastRequestedUrl = normalized;
+  els.webError.hidden = true;
   els.addressInput.value = normalized;
   if (els.webview.src !== normalized) els.webview.src = normalized;
+  else els.webview.reload();
+}
+
+function showWebError(event) {
+  if (event.errorCode === -3 || event.isMainFrame === false) return;
+  els.loading.classList.remove('visible');
+  lastRequestedUrl = event.validatedURL || lastRequestedUrl || els.addressInput.value;
+  els.webErrorTitle.textContent = '网页无法打开';
+  els.webErrorDetail.textContent = `${event.errorDescription || '网络请求失败'}（${event.errorCode}）`;
+  els.webError.hidden = false;
 }
 
 async function showFile(item) {
@@ -319,14 +334,20 @@ els.addressForm.addEventListener('submit', event => { event.preventDefault(); na
 els.backButton.addEventListener('click', () => els.webview.canGoBack() && els.webview.goBack());
 els.forwardButton.addEventListener('click', () => els.webview.canGoForward() && els.webview.goForward());
 els.reloadButton.addEventListener('click', () => els.webview.reload());
-els.openExternal.addEventListener('click', () => window.sidepad.openExternal(els.webview.getURL()));
+els.openExternal.addEventListener('click', () => window.sidepad.openExternal(els.webview.getURL() || lastRequestedUrl));
+els.webRetryButton.addEventListener('click', () => navigate(lastRequestedUrl || els.addressInput.value));
+els.webErrorExternal.addEventListener('click', () => window.sidepad.openExternal(lastRequestedUrl || els.addressInput.value));
 els.favoriteButton.addEventListener('click', () => {
   const url = els.webview.getURL(); if (!url) return;
   const existing = items.find(item => item.type === 'web' && hostOf(item.url) === hostOf(url));
   if (existing) selectItem(existing.id); else openModal({ name: els.webview.getTitle() || hostOf(url), url });
 });
 
-els.webview.addEventListener('did-start-loading', () => els.loading.classList.add('visible'));
+els.webview.addEventListener('did-start-loading', () => {
+  els.webError.hidden = true;
+  els.loading.classList.add('visible');
+});
+els.webview.addEventListener('did-fail-load', showWebError);
 els.webview.addEventListener('did-stop-loading', () => {
   els.loading.classList.remove('visible');
   els.addressInput.value = els.webview.getURL();
@@ -335,7 +356,8 @@ els.webview.addEventListener('did-stop-loading', () => {
   updateFavoriteState();
 });
 els.webview.addEventListener('page-title-updated', event => { els.pageTitle.textContent = event.title; });
-els.webview.addEventListener('did-navigate', event => { els.addressInput.value = event.url; els.pageHost.textContent = hostOf(event.url); updateFavoriteState(); });
+els.webview.addEventListener('did-navigate', event => { lastRequestedUrl = event.url; els.addressInput.value = event.url; els.pageHost.textContent = hostOf(event.url); updateFavoriteState(); });
+els.webview.addEventListener('did-navigate-in-page', event => { lastRequestedUrl = event.url; els.addressInput.value = event.url; els.pageHost.textContent = hostOf(event.url); updateFavoriteState(); });
 
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape') { if (!els.modalBackdrop.hidden) closeModal(); else window.sidepad.collapse(); }

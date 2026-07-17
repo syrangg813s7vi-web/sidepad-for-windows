@@ -9,6 +9,8 @@ const sourceDir = path.resolve(
 );
 const outputDir = path.resolve(".windows-vm/unattended");
 const outputIso = path.resolve(".windows-vm/sidepad-unattended.iso");
+const packageMetadata = JSON.parse(await readFile(path.resolve("package.json"), "utf8"));
+const sidepadVersion = packageMetadata.version;
 const windowsArchitecture = process.env.WINDOWS_ARCH ?? "arm64";
 if (!["amd64", "arm64"].includes(windowsArchitecture)) {
   throw new Error(`Unsupported Windows architecture: ${windowsArchitecture}`);
@@ -16,8 +18,8 @@ if (!["amd64", "arm64"].includes(windowsArchitecture)) {
 const sidepadInstaller = path.resolve(
   process.env.SIDEPAD_WINDOWS_INSTALLER ??
     (windowsArchitecture === "amd64"
-      ? "dist/Sidepad Setup 0.1.0.exe"
-      : "dist-arm64/Sidepad Setup 0.1.0.exe"),
+      ? `dist/Sidepad Setup ${sidepadVersion}.exe`
+      : `dist-arm64/Sidepad Setup ${sidepadVersion}.exe`),
 );
 const windowsImageIndex =
   process.env.WINDOWS_IMAGE_INDEX ?? (windowsArchitecture === "amd64" ? "1" : "3");
