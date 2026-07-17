@@ -235,3 +235,45 @@
   - #3 已实现：PPTX 按实际可读宽度以 list 模式连续渲染，移除单页固定高度和 640px 最小宽度；三页 E2E 已通过。
   - `npm test`、`npm audit` 和 `npm run dist:win:x64` 通过；安装包内 `Sidepad.exe` 确认为 PE32+ x86-64，安装版和便携版均已生成 SHA-256。
   - 创建 PR #6，关联并在合入时关闭 Issue #3、#4、#5；准备发布 v0.2.0 x64 安装版和便携版。
+
+### Phase 12: 改为仅失焦隐藏
+- **Status:** in_progress
+- Actions taken:
+  - 删除 renderer 的全局 `mouseleave` 收起监听及对应 preload/IPC 接口。
+  - 保留主窗口 `blur` 后 480ms 收起，并保留 Esc 与手动收起按钮。
+  - 增加 E2E：鼠标离开 800ms 后面板仍应保持展开。
+  - 完整 `npm test` 通过，并加强 Electron 退出后的临时目录清理重试，避免 macOS 文件占用竞态。
+  - 重新启动本地源码版本供用户体验新隐藏规则。
+
+### Phase 13: 修复网页和文档横向溢出
+- **Status:** in_progress
+- Actions taken:
+  - 定位到 `.app-shell` 最小宽度 740px 与面板最大宽度 680px 冲突，导致所有内容至少横向溢出 60px。
+  - 应用壳改为 `width: 100%; min-width: 0`，网格内容列使用 `minmax(0, 1fr)`。
+  - WebView 容器增加 `min-width: 0` 和边界裁切，WebView 明确限制为可读区域的 100%。
+  - 完整回归和增强 E2E 通过：网页壳、WebView、PDF iframe、PPTX 舞台和幻灯片均不超过 Sidepad 视口。
+  - 重启本地源码版本，交给用户复测网页、PDF 与 PPTX。
+
+### Phase 14: 修复文件添加隐藏与 PPTX 标签切换卡顿
+- **Status:** in_progress
+- Actions taken:
+  - 本地状态确认用户的 PPTX 没有进入列表；直接导入 `/Users/tinyfox/Downloads/created_slides.pptx` 后约 5 秒成功渲染 2 页，排除文件完全不兼容。
+  - 文件选择器打开期间暂停 blur 收起，关闭选择器后恢复并聚焦 Sidepad。
+  - 增加文件渲染版本令牌，旧异步任务不再覆盖当前标签；PPTX 首次渲染完成后缓存 HTML，后续切回即时恢复。
+  - E2E 捕获并修复隐藏 WebView 未 `dom-ready` 时调用 `getURL()` 抛错的问题；该异常此前会直接中断标签切换。
+  - 完整 `npm test` 通过，实际 `created_slides.pptx` 已加入本地列表并成功渲染 2 页。
+
+### Phase 15: 修复网页内部视口不自适应
+- **Status:** in_progress
+- Actions taken:
+  - 实测宿主 WebView 边界为 559×830，但 ChatGPT guest `innerWidth/innerHeight` 为 559×150；宽度正确、内部高度仍停留在 Electron 默认值。
+  - 根因是 WebView 在非网页状态使用 `display:none` 初始化，显示后 guest surface 未同步真实高度。
+  - 改为 WebView 始终绝对定位并保持 100% 尺寸，只通过 `visibility`、`opacity` 和 `pointer-events` 控制显示与交互。
+  - 完整测试通过；实际 ChatGPT 复测中宿主与 guest 均为 559×830，网页 `scrollWidth` 为 559，不再使用错误的 150px 内部高度。
+
+### Phase 16: 发布 v0.2.1
+- **Status:** in_progress
+- Actions taken:
+  - 版本号、README 和发布说明更新为 v0.2.1。
+  - `npm test`、`npm audit` 和 Windows x64 构建通过；生产依赖 0 个已知漏洞。
+  - 安装包内 `Sidepad.exe` 确认为 PE32+ x86-64，安装版和便携版均生成 SHA-256。

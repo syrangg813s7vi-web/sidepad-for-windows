@@ -1,6 +1,6 @@
 # Sidepad for Windows
 
-一个轻量的 Windows 侧边工作台。平时隐藏在屏幕右侧，鼠标移动到边缘时展开；鼠标和焦点离开后自动收起。
+一个轻量的 Windows 侧边工作台。平时隐藏在屏幕右侧，鼠标移动到边缘时展开；点击其他窗口、按 `Esc` 或主动收起后隐藏。
 
 [下载最新版本](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/latest) · [设计文档](docs/DESIGN.md) · [Windows x64 验收记录](docs/WINDOWS-VM-VALIDATION.md)
 
@@ -8,13 +8,13 @@
 
 ## 下载
 
-当前版本：`v0.2.0`，适用于 Windows 10/11 x64。
+当前版本：`v0.2.1`，适用于 Windows 10/11 x64。
 
 | 版本 | 适用场景 | 下载 |
 |------|----------|------|
-| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.2.0 x64](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.0/Sidepad.Setup.0.2.0.exe) |
-| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.2.0 x64 Portable](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.0/Sidepad.0.2.0.exe) |
-| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.0/SHA256SUMS.txt) |
+| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.2.1 x64](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.1/Sidepad.Setup.0.2.1.exe) |
+| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.2.1 x64 Portable](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.1/Sidepad.0.2.1.exe) |
+| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.1/SHA256SUMS.txt) |
 
 安装包自带 Chromium 和文档预览运行时，不需要另外安装 Chrome、Microsoft Office 或 LibreOffice。
 
@@ -22,7 +22,7 @@
 
 ## 主要功能
 
-- 在 Windows 主显示器右侧边缘唤醒，离开或失焦后自动隐藏。
+- 在 Windows 主显示器右侧边缘唤醒；鼠标移出后保持展开，点击其他窗口失焦后自动隐藏。
 - 使用窄面板布局，尽量减少对主工作区的遮挡。
 - 添加、切换和管理 Chromium 网页，保留独立登录会话。
 - 新建本地文本笔记，输入内容自动保存。
@@ -49,7 +49,7 @@
 1. 启动 Sidepad。
 2. 将鼠标移动到 Windows 主显示器右侧边缘，短暂停留后面板展开。
 3. 使用左侧窄轨道添加网页、笔记或本地文件。
-4. 将鼠标移出面板并切换焦点，Sidepad 会自动收起。
+4. 鼠标移出面板不会收起；点击其他窗口并切换焦点后，Sidepad 会自动隐藏。
 
 | 快捷键 | 操作 |
 |--------|------|
@@ -82,9 +82,9 @@ npm run dist:win:x64
 
 ## 验证状态
 
-`v0.2.0` 在既有 Windows 11 Enterprise Evaluation x64 验收基础上，新增主屏选择、扩大触发区和 PPTX 多页连续预览自动化测试：
+`v0.2.1` 在既有 Windows 11 Enterprise Evaluation x64 验收基础上，新增窄面板内容边界、WebView 内部视口、PDF 和 PPTX 标签切换自动化测试：
 
-- 边缘唤醒和自动隐藏。
+- 边缘唤醒、鼠标离开保持展开和失焦隐藏。
 - Chromium 网页加载和笔记持久化。
 - TXT、DOCX、PPTX、XLSX 内嵌预览，PPTX 多页连续布局测试。
 - 100%/150% DPI 窗口几何、主屏选择和双屏接缝逻辑测试。

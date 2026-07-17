@@ -17,6 +17,7 @@ let mainWindow;
 let isExpanded = false;
 let collapseTimer;
 let animationFrame;
+let isFileDialogOpen = false;
 const triggerWindows = new Map();
 const allowedFiles = new Set();
 
@@ -99,7 +100,7 @@ function collapsePanel() {
   animateTo(panelBounds(false), () => mainWindow.hide());
 }
 
-function scheduleCollapse(delay = 650) {
+function scheduleCollapse(delay = 480) {
   clearTimeout(collapseTimer);
   collapseTimer = setTimeout(collapsePanel, delay);
 }
@@ -131,7 +132,9 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  mainWindow.on('blur', () => scheduleCollapse(480));
+  mainWindow.on('blur', () => {
+    if (!isFileDialogOpen) scheduleCollapse();
+  });
   mainWindow.on('closed', () => { mainWindow = null; });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -190,8 +193,6 @@ function rebuildTriggerWindows() {
 }
 
 ipcMain.on('panel-enter', () => expandPanel({ focus: true }));
-ipcMain.on('panel-leave', () => scheduleCollapse());
-ipcMain.on('panel-stay', () => clearTimeout(collapseTimer));
 ipcMain.on('panel-collapse', () => collapsePanel());
 ipcMain.on('window-close', () => mainWindow?.close());
 ipcMain.handle('open-external', (_, url) => {
@@ -199,14 +200,23 @@ ipcMain.handle('open-external', (_, url) => {
   return false;
 });
 ipcMain.handle('pick-files', async () => {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    title: '添加到 Sidepad',
-    properties: ['openFile', 'multiSelections'],
-    filters: [
-      { name: '支持的内容', extensions: ['txt', 'md', 'markdown', 'json', 'csv', 'log', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'] },
-      { name: '所有文件', extensions: ['*'] },
-    ],
-  });
+  clearTimeout(collapseTimer);
+  isFileDialogOpen = true;
+  let result;
+  try {
+    result = await dialog.showOpenDialog(mainWindow, {
+      title: '添加到 Sidepad',
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: '支持的内容', extensions: ['txt', 'md', 'markdown', 'json', 'csv', 'log', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'] },
+        { name: '所有文件', extensions: ['*'] },
+      ],
+    });
+  } finally {
+    isFileDialogOpen = false;
+    clearTimeout(collapseTimer);
+    if (mainWindow && !mainWindow.isDestroyed()) expandPanel({ focus: true });
+  }
   if (result.canceled) return [];
   return describeFiles(result.filePaths);
 });

@@ -6,8 +6,8 @@
 |----------|----------|----------|
 | 面板最大宽度 680px、最小 520px、显示器宽度约 42% | `src/window-layout.js`：`calculatePanelBounds()` | `tests/window-layout.test.js` 的分辨率与 150% DPI 测试 |
 | 展开/收起动画 180ms | `src/main.js`：`ANIMATION_MS`、`animateTo()` | 录屏或计时检查 |
-| 鼠标离开 650ms 收起 | `src/main.js`：`scheduleCollapse()` | 鼠标离开内容区 |
-| 失焦 480ms 收起 | `src/main.js`：`mainWindow.on('blur')` | 切换到其他窗口 |
+| 鼠标离开后保持展开 | `src/renderer/app.js`：不注册全局 `mouseleave` 收起事件 | E2E 移出后等待 800ms，面板仍展开 |
+| 失焦 480ms 收起 | `src/main.js`：`mainWindow.on('blur')`、`scheduleCollapse()` | 点击并切换到其他窗口 |
 | 触发条宽 12px | `src/window-layout.js`：`calculateTriggerBounds()` | 布局单元测试 |
 | 触发防误触 140ms | `src/renderer/edge.html` | 快速跨过边缘不展开 |
 | 仅 Windows 主屏激活 | `src/main.js`：`getPrimaryDisplay()`、`rebuildTriggerWindows()`；`src/window-layout.js`：`selectPrimaryDisplay()` | 主屏选择单元测试；双屏确认仅创建一个触发窗口 |
@@ -19,10 +19,15 @@
 | 网页失败反馈与重试 | `src/renderer/app.js`：`did-fail-load`、`showWebError()` | E2E 持续断连后恢复服务并重试 |
 | 新窗口链接在当前网页打开 | `src/main.js`：`did-attach-webview`、`setWindowOpenHandler()` | E2E 执行 `window.open()` |
 | Chromium 兼容 User-Agent | `src/main.js`：`did-attach-webview` | 检查 guest 请求头不含 Electron 产品标识 |
+| 未就绪 WebView 不阻断标签切换 | `src/renderer/app.js`：`updateFavoriteState()` | 从 PPTX 切到笔记再切回，不调用未就绪 WebView 的 `getURL()` |
+| 网页和文档不超出窄面板边界 | `src/renderer/styles.css`：`.app-shell`、`.webview-wrap`、`webview` | E2E 检查文档、应用壳和 WebView 右边界均不超过视口 |
+| 网页内部视口与可见区域一致 | `src/renderer/styles.css`：WebView 始终保持尺寸，仅用 `visibility` 隐藏 | E2E 对比 guest `innerWidth/innerHeight` 与 WebView 边界 |
 | 笔记自动保存 | `src/renderer/app.js`：`noteEditor` input 事件 | 输入后重启应用 |
 | PDF/图片/文本内嵌预览 | `src/main.js` 文件描述、`app.js`：`showFile()` | 添加样例文件 |
 | PPTX/DOCX/XLSX 自包含预览 | `index.html` 内置脚本、`app.js`：`showFile()` | 无 Office 环境打开样例 |
 | PPTX 使用完整内容区连续展示多页 | `src/renderer/app.js`：`renderPptx()`；`styles.css`：`.pptx-stage` | 三页 PPTX E2E 检查页数、宽度、滚动高度与无横向裁切 |
+| PPTX 标签切换即时恢复 | `src/renderer/app.js`：`pptxHtmlCache`、`fileRenderVersion` | E2E 首次渲染后切到笔记再切回，立即恢复 3 页缓存 |
+| 系统文件选择期间不隐藏 | `src/main.js`：`isFileDialogOpen`、`pick-files` | 选择或取消文件后 Sidepad 恢复并聚焦 |
 | 文件拖放添加 | `src/preload.js`、`app.js` drop 事件 | 拖放多个文件 |
 | 本地文件白名单协议 | `src/main.js`：`sidepad-local`、`allowedFiles` | 未授权路径返回 403 |
 | 渲染进程隔离 | `src/main.js`：`contextIsolation`、`nodeIntegration` | 安全配置检查 |
