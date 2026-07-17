@@ -96,8 +96,8 @@ Phase 11: 依次实现 Issue #4、#5、#3
 - [x] Issue #3：PPTX 使用完整内容区连续展示多页
 - [x] 同步设计文档、设计—代码对应表和自动化测试
 - [x] Windows x64 构建与回归验证
-- [ ] 提交、合入并更新三个 GitHub Issue
-- **Status:** in_progress
+- [x] 提交、合入并更新三个 GitHub Issue
+- **Status:** complete
 
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。
