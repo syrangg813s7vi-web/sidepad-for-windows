@@ -4,7 +4,7 @@
 交付一个可运行、可打包并发布到 GitHub 的自包含 Windows Sidepad：贴边自动隐藏，可承载 Chromium 网页、文本、图片、PDF 与 PPTX/Office 内容，安装后不依赖外部组件。
 
 ## Current Phase
-Phase 7: 合入与 Release 发布
+Phase 8: 文档排版修订
 
 ## Phases
 
@@ -66,6 +66,13 @@ Phase 7: 合入与 Release 发布
 - [x] 将 PR #1 合入 `main`
 - [x] 创建带 SHA-256 校验文件的 GitHub Release `v0.1.0`
 - [x] 验证 Release 附件可通过 GitHub 下载
+- **Status:** complete
+
+### Phase 8: 文档排版修订
+- [x] 重构 README 的下载、功能、格式支持和验证信息
+- [x] 修复 Release Note 中的字面量换行符
+- [x] 更新 GitHub Release 并核对渲染内容
+- [x] 提交并推送文档修订
 - **Status:** complete
 
 ## Key Questions

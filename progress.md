@@ -194,3 +194,11 @@
   - 将 PR #1 转为 ready 并以 merge commit `dc46ef0` 合入 `main`。
   - 发布正式 GitHub Release `v0.1.0`，上传安装版、便携版和 `SHA256SUMS.txt`。
   - 通过 GitHub Release API 核对三个附件均为 `uploaded`，EXE 大小和 SHA-256 摘要与本机构建一致。
+
+### Phase 8: 文档排版修订
+- **Status:** complete
+- Actions taken:
+  - 定位 Release Note 将 `\\n` 保存为字面量，导致 GitHub 页面无法正常换行。
+  - 重构 README，增加下载表格、截图、支持格式、基本操作、验证状态和已知限制。
+  - 新增可纳入版本控制的 `docs/RELEASE-NOTES-v0.1.0.md`，作为 GitHub Release Note 的单一来源。
+  - 使用该 Markdown 文件更新 GitHub Release `v0.1.0`，复核标题、段落、表格、列表和 SHA-256 代码块均已正常呈现。

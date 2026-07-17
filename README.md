@@ -1,44 +1,97 @@
 # Sidepad for Windows
 
-一个常驻屏幕右侧、按需唤出的多内容工作台。鼠标触碰右侧边缘时展开，鼠标和焦点离开后自动收起。
+一个轻量的 Windows 侧边工作台。平时隐藏在屏幕右侧，鼠标移动到边缘时展开；鼠标和焦点离开后自动收起。
 
-## 功能
+[下载最新版本](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/latest) · [设计文档](docs/DESIGN.md) · [Windows x64 验收记录](docs/WINDOWS-VM-VALIDATION.md)
 
-- 贴靠当前显示器右侧边缘，始终置顶
-- 鼠标悬停展开，离开或失焦后自动隐藏
-- 添加、切换和删除 Chromium 网页（相当于嵌入式 Chrome 页面）
-- 新建自动保存的本地文本笔记
-- 内嵌预览 TXT/Markdown/JSON/CSV、图片和 PDF
-- 内置预览 PPTX、DOCX 和 XLSX，无需 Microsoft Office
-- 支持将本地文件直接拖入面板
-- 双屏/多屏独立边缘触发，面板跟随鼠标所在屏幕
-- 内置后退、前进、刷新、地址栏与网页搜索
-- 网页列表和上次打开项本地持久化
-- 支持从面板跳转到系统默认浏览器
-- `Esc` 快速收起，`Ctrl+L` 聚焦地址栏，`Ctrl+R` 刷新
+![Sidepad 界面预览](sidepad-preview.png)
 
-## 开发运行
+## 下载
+
+当前版本：`v0.1.0`，适用于 Windows 10/11 x64。
+
+| 版本 | 适用场景 | 下载 |
+|------|----------|------|
+| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.1.0 x64](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/Sidepad.Setup.0.1.0.exe) |
+| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.1.0 x64 Portable](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/Sidepad.0.1.0.exe) |
+| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/SHA256SUMS.txt) |
+
+安装包自带 Chromium 和文档预览运行时，不需要另外安装 Chrome、Microsoft Office 或 LibreOffice。
+
+> 当前版本尚未配置商业 Authenticode 证书。Windows 可能显示“未知发布者”或 SmartScreen 提示。
+
+## 主要功能
+
+- 在当前显示器右侧边缘唤醒，离开或失焦后自动隐藏。
+- 使用窄面板布局，尽量减少对主工作区的遮挡。
+- 添加、切换和管理 Chromium 网页，保留独立登录会话。
+- 新建本地文本笔记，输入内容自动保存。
+- 拖入本地文件并在面板中快速查看。
+- 支持双屏/多屏独立触发，面板跟随鼠标所在屏幕。
+- 提供后退、前进、刷新、地址栏和系统浏览器打开入口。
+
+## 支持的内容
+
+| 内容类型 | 支持情况 |
+|----------|----------|
+| 网页 | 使用应用内置 Chromium 加载 |
+| TXT、Markdown、JSON、CSV | 内嵌查看；笔记支持自动保存 |
+| PNG、JPG、GIF、WebP、SVG | 内嵌预览 |
+| PDF | 使用 Chromium 内嵌预览 |
+| DOCX、PPTX、XLSX | 使用安装包内置 JavaScript 渲染器预览 |
+| 旧版 DOC、PPT、XLS | 暂不支持内嵌预览，建议转换为新版 Office 格式 |
+
+复杂 Office 动画、宏和部分高级排版可能无法完全还原；Sidepad 不会修改原始文档。
+
+## 基本操作
+
+1. 启动 Sidepad。
+2. 将鼠标移动到显示器右侧边缘，等待面板展开。
+3. 使用左侧窄轨道添加网页、笔记或本地文件。
+4. 将鼠标移出面板并切换焦点，Sidepad 会自动收起。
+
+| 快捷键 | 操作 |
+|--------|------|
+| `Esc` | 收起面板 |
+| `Ctrl+L` | 聚焦网页地址栏 |
+| `Ctrl+R` | 刷新当前网页 |
+
+## 开发与构建
+
+需要 Node.js 22 和 npm。
 
 ```bash
 npm install
 npm start
 ```
 
-## 构建 Windows 安装包
+运行测试：
 
-建议在 Windows 10/11 环境中运行：
-
-```powershell
-npm install
-npm run dist
+```bash
+npm test
 ```
 
-安装包和便携版会生成到 `dist/` 目录。
+构建 Windows x64 安装版和便携版：
 
-## 设计文档
+```bash
+npm run dist:win:x64
+```
 
-产品交互、双屏规则、视觉规范、技术架构和文件格式支持参见 [设计文档](docs/DESIGN.md)，设计与代码的逐项对应关系参见 [设计—代码对应表](docs/DESIGN-CODE-MAP.md)。
+生成文件位于 `dist/` 目录。
 
-## 文件预览说明
+## 验证状态
 
-安装包内含 PPTX、DOCX 和 XLSX 的 JavaScript 解析器，不依赖 Office 或 LibreOffice。复杂动画、宏和部分高级排版可能无法完全还原；旧 `.ppt`、`.doc`、`.xls` 格式不提供内嵌预览。
+`v0.1.0` 已在 Windows 11 Enterprise Evaluation x64 虚拟机完成以下验证：
+
+- 边缘唤醒和自动隐藏。
+- Chromium 网页加载和笔记持久化。
+- TXT、DOCX、PPTX、XLSX 内嵌预览。
+- 100%/150% DPI 窗口几何和双屏接缝逻辑测试。
+
+真正的双显示器硬件验收仍需要在两个输出均被 Windows 正常识别的设备上补充。详细结果参见 [Windows 虚拟机验收文档](docs/WINDOWS-VM-VALIDATION.md)。
+
+## 设计与实现
+
+- [产品与技术设计](docs/DESIGN.md)
+- [设计—代码对应表](docs/DESIGN-CODE-MAP.md)
+- [Windows x64 验收记录](docs/WINDOWS-VM-VALIDATION.md)
