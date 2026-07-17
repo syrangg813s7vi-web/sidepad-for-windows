@@ -233,7 +233,7 @@ try {
   for (const [extension, assertion] of [
     ["txt", 'document.querySelector(".text-document")?.textContent.includes("Windows x64")'],
     ["docx", 'document.querySelector(".docx-stage")?.textContent.includes("Windows x64 DOCX QA")'],
-    ["pptx", 'document.querySelector(".pptx-stage")?.textContent.includes("Windows x64 PPTX QA")'],
+    ["pptx", 'document.querySelector(".pptx-stage")?.dataset.slideCount === "3" && document.querySelectorAll(".pptx-preview-slide-wrapper").length === 3 && document.querySelector(".pptx-stage")?.textContent.includes("Windows x64 PPTX QA")'],
     ["xlsx", 'document.querySelector(".sheet-table")?.textContent.includes("Sidepad Windows x64")'],
   ]) {
     await importFixture(main, drive, extension);

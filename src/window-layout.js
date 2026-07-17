@@ -1,7 +1,7 @@
 const PANEL_WIDTH = 680;
 const MIN_PANEL_WIDTH = 520;
-const EDGE_WIDTH = 8;
-const SHARED_EDGE_HEIGHT = 180;
+const EDGE_WIDTH = 12;
+const SHARED_EDGE_HEIGHT = 320;
 
 function calculatePanelBounds(workArea, expanded) {
   const { x, y, width, height } = workArea;
@@ -30,6 +30,12 @@ function hasDisplayOnRight(display, allDisplays) {
   });
 }
 
+function selectPrimaryDisplay(displays, primaryDisplayId) {
+  return displays.find((display) => String(display.id) === String(primaryDisplayId))
+    || displays[0]
+    || null;
+}
+
 function calculateTriggerBounds(display, sharedEdge) {
   const handleHeight = sharedEdge
     ? Math.min(SHARED_EDGE_HEIGHT, display.workArea.height)
@@ -52,4 +58,5 @@ module.exports = {
   calculatePanelBounds,
   calculateTriggerBounds,
   hasDisplayOnRight,
+  selectPrimaryDisplay,
 };

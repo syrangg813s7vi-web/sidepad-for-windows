@@ -21,10 +21,9 @@
   <body title="展开 Sidepad">
     <div class="dots"><i></i><i></i><i></i></div>
     <script>
-      const displayId = new URLSearchParams(location.search).get('displayId');
       let timer;
       document.body.addEventListener('mouseenter', () => {
-        timer = setTimeout(() => window.sidepad.enter(displayId), 140);
+        timer = setTimeout(() => window.sidepad.enter(), 140);
       });
       document.body.addEventListener('mouseleave', () => clearTimeout(timer));
     </script>
