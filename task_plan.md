@@ -4,7 +4,7 @@
 交付一个可运行、可打包并发布到 GitHub 的自包含 Windows Sidepad：贴边自动隐藏，可承载 Chromium 网页、文本、图片、PDF 与 PPTX/Office 内容，安装后不依赖外部组件。
 
 ## Current Phase
-Phase 6: Windows 虚拟机验收
+Phase 7: 合入与 Release 发布
 
 ## Phases
 
@@ -60,6 +60,13 @@ Phase 6: Windows 虚拟机验收
 - [x] 在 x64 虚拟机验证贴边唤出、自动隐藏、网页、笔记与 Office 文档预览
 - [x] 在 x64 虚拟机模拟双屏与 DPI 缩放并记录结果（双屏设备方案受环境限制，结果已记录）
 - **Status:** complete（真正双显示器硬件验收仍受当前 QEMU 显示驱动限制）
+
+### Phase 7: 合入与 Release 发布
+- [ ] 重新执行完整测试并构建 Windows x64 安装版与便携版
+- [ ] 将 PR #1 合入 `main`
+- [ ] 创建带 SHA-256 校验文件的 GitHub Release `v0.1.0`
+- [ ] 验证 Release 附件可通过 GitHub 下载
+- **Status:** in_progress
 
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。

@@ -182,3 +182,10 @@
   - `tests/artifacts/windows-x64-content-report.json`
 - Remaining:
   - 在具备两个被 Windows 正常识别输出的真实硬件、Hyper-V 或 VMware 环境中补充真正双显示器验收。
+
+### Phase 7: 合入与 Release 发布
+- **Status:** in_progress
+- Actions taken:
+  - 确认 PR #1 仍为可合入的草稿，目标分支为 `main`。
+  - 确认项目版本为 `0.1.0`，Release 标签采用 `v0.1.0`。
+  - 确认 GitHub CLI 已登录且仓库为私有仓库。
