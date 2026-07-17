@@ -131,9 +131,9 @@ Phase 11: 依次实现 Issue #4、#5、#3
 - [x] 整理版本范围与发布说明
 - [x] 完整测试、依赖审计和 Windows x64 构建
 - [x] 生成并核对 SHA-256
-- [ ] 提交、创建 PR 并合入 main
-- [ ] 发布 GitHub Release v0.2.1
-- **Status:** in_progress
+- [x] 提交、创建 PR 并合入 main
+- [x] 发布 GitHub Release v0.2.1
+- **Status:** complete
 
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。
