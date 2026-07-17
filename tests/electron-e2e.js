@@ -108,6 +108,10 @@ async function createFixtures() {
     path.join(root, 'tests', 'fixtures', 'sample-multipage.pptx'),
     path.join(fixtureDir, 'sample.pptx'),
   );
+  await fs.copyFile(
+    path.join(root, 'tests', 'fixtures', 'sample-two-page.pdf'),
+    path.join(fixtureDir, 'sample.pdf'),
+  );
 }
 
 function startFixtureServer() {
@@ -202,6 +206,13 @@ async function run() {
 
   await edge.eval('window.sidepad.enter()');
   await waitFor(() => main.eval('document.body.classList.contains("expanded")'), 'edge trigger did not expand panel');
+  await main.eval('document.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }))');
+  await new Promise(resolve => setTimeout(resolve, 800));
+  assert.equal(
+    await main.eval('document.body.classList.contains("expanded")'),
+    true,
+    'moving the pointer away should keep the panel expanded',
+  );
   await main.eval('window.sidepad.collapse()');
   await waitFor(async () => !(await main.eval('document.body.classList.contains("expanded")')), 'panel did not collapse');
 
@@ -224,6 +235,32 @@ async function run() {
     true,
     'webview user agent should not expose the Electron product token',
   );
+  assert.deepEqual(await main.eval(`(() => {
+    const shell = document.querySelector('.app-shell').getBoundingClientRect();
+    const webview = document.querySelector('#webview').getBoundingClientRect();
+    return {
+      documentFits: document.documentElement.scrollWidth <= window.innerWidth,
+      shellFits: shell.left >= 0 && shell.right <= window.innerWidth,
+      webviewFits: webview.left >= 0 && webview.right <= window.innerWidth,
+    };
+  })()`), {
+    documentFits: true,
+    shellFits: true,
+    webviewFits: true,
+  }, 'web content must stay inside the Sidepad viewport');
+  const webviewViewport = await main.eval(`(async () => {
+    const webview = document.querySelector('#webview');
+    const rect = webview.getBoundingClientRect();
+    const guest = await webview.executeJavaScript('({ width: innerWidth, height: innerHeight })');
+    return {
+      widthMatches: Math.abs(guest.width - rect.width) < 2,
+      heightMatches: Math.abs(guest.height - rect.height) < 2,
+    };
+  })()`);
+  assert.deepEqual(webviewViewport, {
+    widthMatches: true,
+    heightMatches: true,
+  }, 'guest webpage viewport must match the visible WebView size');
 
   const failingWeb = { id: 'qa-fail', type: 'web', name: 'Retry QA', url: `http://127.0.0.1:${serverPort}/fails-once`, color: '#d55d54' };
   await setActiveItem(main, failingWeb);
@@ -239,6 +276,17 @@ async function run() {
   await waitFor(() => main.eval('document.querySelector("#pageTitle")?.textContent === "Popup Target"'), 'target=_blank did not navigate the current webview');
 
   for (const [ext, assertion] of [
+    ['pdf', `(() => {
+      const frame = document.querySelector('#filePreview iframe');
+      const preview = document.querySelector('#filePreview');
+      const frameRect = frame?.getBoundingClientRect();
+      const previewRect = preview?.getBoundingClientRect();
+      return frame?.src.includes('sidepad-local://file/')
+        && Math.abs(frameRect.width - previewRect.width) < 1
+        && Math.abs(frameRect.height - previewRect.height) < 1
+        && previewRect.left >= 0
+        && previewRect.right <= window.innerWidth;
+    })()`],
     ['docx', 'document.querySelector(".docx-stage")?.childElementCount > 0'],
     ['pptx', `(() => {
       const stage = document.querySelector('.pptx-stage');
@@ -250,6 +298,8 @@ async function run() {
         && slides.length === 3
         && Math.abs(stageRect.width - previewRect.width) < 1
         && Math.abs(stageRect.height - previewRect.height) < 1
+        && previewRect.left >= 0
+        && previewRect.right <= window.innerWidth
         && slides.every((slide) => slide.getBoundingClientRect().width <= stage.clientWidth)
         && stage.scrollHeight > slides[0].clientHeight * 2;
     })()`],
@@ -269,6 +319,16 @@ async function run() {
     });
     try {
       await waitFor(() => main.eval(assertion), `${ext.toUpperCase()} preview did not render`, 20000);
+      if (ext === 'pptx') {
+        assert.equal(await main.eval(`(() => {
+          const pptxId = activeId;
+          const note = { id: 'switch-note', type: 'note', name: 'Switch Note', content: '', color: '#7566ec' };
+          items.push(note);
+          selectItem(note.id);
+          selectItem(pptxId);
+          return document.querySelector('.pptx-stage')?.dataset.slideCount;
+        })()`), '3', 'returning to a rendered PPTX should restore its cached preview immediately');
+      }
     } catch (error) {
       const previewState = await main.eval(`({
         html: document.querySelector('#filePreview')?.innerHTML,
@@ -282,19 +342,23 @@ async function run() {
   main.close();
   edge.close();
   console.log('PASS homepage and bundled renderer availability');
-  console.log('PASS edge-trigger expand and programmatic collapse');
+  console.log('PASS edge-trigger expand, pointer-leave persistence and programmatic collapse');
   console.log('PASS note restore and autosave');
   console.log('PASS Chromium webview navigation');
   console.log('PASS Chromium failure recovery and popup navigation');
-  console.log('PASS DOCX, PPTX and XLSX self-contained previews');
+  console.log('PASS PDF, DOCX, PPTX and XLSX self-contained previews');
 }
 
 async function cleanup() {
-  if (electron && !electron.killed) electron.kill('SIGTERM');
+  if (electron && electron.exitCode === null) {
+    const exited = new Promise(resolve => electron.once('exit', resolve));
+    electron.kill('SIGTERM');
+    await Promise.race([exited, sleep(3000)]);
+  }
   if (server) await new Promise(resolve => server.close(resolve));
   await Promise.all([
-    fs.rm(profileDir, { recursive: true, force: true }),
-    fs.rm(fixtureDir, { recursive: true, force: true }),
+    fs.rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 }),
+    fs.rm(fixtureDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 }),
   ]);
 }
 

@@ -1,7 +1,7 @@
 const $ = (selector) => document.querySelector(selector);
 if (!window.sidepad) {
   window.sidepad = {
-    enter() {}, leave() {}, stay() {}, collapse() {}, close() {},
+    enter() {}, collapse() {}, close() {},
     openExternal() {}, pickFiles: async () => [], openFile() {}, revealFile() {},
     importFiles: async () => [], pathForFile: () => '', authorizeFile: async () => false, onPanelState() {},
   };
@@ -30,6 +30,8 @@ let lastRequestedUrl = '';
 let pptxResizeObserver;
 let pptxResizeTimer;
 let pptxRenderVersion = 0;
+let fileRenderVersion = 0;
+const pptxHtmlCache = new Map();
 
 function loadItems() {
   try {
@@ -103,6 +105,7 @@ function showOnly(kind) {
 function selectItem(id) {
   const item = items.find(entry => entry.id === id);
   if (!item) return;
+  const renderVersion = ++fileRenderVersion;
   if (!(item.type === 'file' && item.ext?.toLowerCase() === 'pptx')) resetPptxLayoutWatch();
   activeId = id;
   saveItems();
@@ -117,7 +120,7 @@ function selectItem(id) {
     updateNoteCount();
     setTimeout(() => els.noteEditor.focus(), 0);
   }
-  if (item.type === 'file') showFile(item);
+  if (item.type === 'file') showFile(item, renderVersion);
 }
 
 function navigate(url) {
@@ -140,10 +143,11 @@ function showWebError(event) {
   els.webError.hidden = false;
 }
 
-async function showFile(item) {
+async function showFile(item, renderVersion) {
   resetPptxLayoutWatch();
   showOnly('file');
   const available = await window.sidepad.authorizeFile(item.path);
+  if (renderVersion !== fileRenderVersion) return;
   if (!available) {
     els.filePreview.innerHTML = `<div class="office-card"><div class="file-glyph">?</div><h2>找不到文件</h2><p>${escapeHtml(item.name)} 已移动、被删除，或当前没有访问权限。</p><div class="file-actions"><button data-remove-missing>从 Sidepad 移除</button></div></div>`;
     els.filePreview.querySelector('[data-remove-missing]').onclick = () => {
@@ -155,6 +159,10 @@ async function showFile(item) {
   }
   const ext = item.ext.toLowerCase();
   els.filePreview.classList.toggle('pptx-mode', ext === 'pptx');
+  if (ext === 'pptx' && pptxHtmlCache.has(item.id)) {
+    els.filePreview.innerHTML = pptxHtmlCache.get(item.id);
+    return;
+  }
   if (textExts.has(ext) && item.content != null) {
     els.filePreview.innerHTML = `<article class="text-document">${escapeHtml(item.content)}</article>`;
   } else if (imageExts.has(ext)) {
@@ -165,6 +173,7 @@ async function showFile(item) {
     els.filePreview.innerHTML = '<div class="office-loading">正在排版 Word 文档…</div>';
     try {
       const data = await fetch(item.previewUrl).then(response => response.arrayBuffer());
+      if (renderVersion !== fileRenderVersion) return;
       els.filePreview.innerHTML = '<div class="docx-stage"></div>';
       await window.docx.renderAsync(data, els.filePreview.querySelector('.docx-stage'), null, {
         className: 'sidepad-docx',
@@ -177,9 +186,12 @@ async function showFile(item) {
     els.filePreview.innerHTML = '<div class="office-loading">正在生成幻灯片…</div>';
     try {
       const data = await fetch(item.previewUrl).then(response => response.arrayBuffer());
+      if (renderVersion !== fileRenderVersion) return;
       els.filePreview.innerHTML = '<div class="pptx-stage"></div>';
       const stage = els.filePreview.querySelector('.pptx-stage');
       await renderPptx(data, stage);
+      if (renderVersion !== fileRenderVersion || !stage.isConnected) return;
+      pptxHtmlCache.set(item.id, els.filePreview.innerHTML);
       let observedWidth = els.filePreview.clientWidth;
       pptxResizeObserver = new ResizeObserver(() => {
         if (!stage.isConnected || Math.abs(els.filePreview.clientWidth - observedWidth) < 8) return;
@@ -195,6 +207,7 @@ async function showFile(item) {
     els.filePreview.innerHTML = '<div class="office-loading">正在读取工作簿…</div>';
     try {
       const data = await fetch(item.previewUrl).then(response => response.arrayBuffer());
+      if (renderVersion !== fileRenderVersion) return;
       const workbook = new window.ExcelJS.Workbook();
       await workbook.xlsx.load(data);
       renderWorkbook(workbook);
@@ -223,7 +236,6 @@ async function renderPptx(data, stage) {
   const previewer = window.pptxPreview.init(stage, { width, mode: 'list' });
   await previewer.preview(data);
   if (renderVersion !== pptxRenderVersion || !stage.isConnected) {
-    previewer.destroy();
     return;
   }
   stage.dataset.slideCount = String(previewer.slideCount || 0);
@@ -266,7 +278,11 @@ function renderWorkbook(workbook) {
 
 function updateNoteCount() { els.noteCount.textContent = `${els.noteEditor.value.length} 字`; }
 function updateFavoriteState() {
-  const current = els.webview.getURL?.() || els.addressInput.value;
+  const activeItem = items.find(item => item.id === activeId);
+  let current = els.addressInput.value;
+  if (activeItem?.type === 'web') {
+    try { current = els.webview.getURL?.() || current; } catch {}
+  }
   const saved = items.some(item => item.type === 'web' && hostOf(item.url) === hostOf(current));
   els.favoriteButton.classList.toggle('saved', saved);
   els.favoriteButton.textContent = saved ? '★' : '☆';
@@ -278,7 +294,6 @@ function openModal(prefill = {}) {
   els.formError.textContent = '';
   els.modalBackdrop.hidden = false;
   setContentType('web');
-  window.sidepad.stay();
   setTimeout(() => (prefill.name ? els.siteUrl : els.siteName).focus(), 20);
 }
 function closeModal() { els.modalBackdrop.hidden = true; els.siteForm.reset(); }
@@ -304,12 +319,9 @@ function appendFiles(files) {
 }
 
 els.edgeHandle.addEventListener('mouseenter', () => window.sidepad.enter());
-document.addEventListener('mouseenter', () => window.sidepad.stay());
-document.addEventListener('mouseleave', () => window.sidepad.leave());
 document.addEventListener('dragover', event => {
   event.preventDefault();
   document.body.classList.add('dragging-file');
-  window.sidepad.stay();
 });
 document.addEventListener('dragleave', event => {
   if (!event.relatedTarget) document.body.classList.remove('dragging-file');

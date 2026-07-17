@@ -99,6 +99,42 @@ Phase 11: 依次实现 Issue #4、#5、#3
 - [x] 提交、合入并更新三个 GitHub Issue
 - **Status:** complete
 
+### Phase 12: 改为仅失焦隐藏
+- [x] 删除鼠标离开后的自动收起路径
+- [x] 保留点击其他窗口后的失焦收起，以及 Esc/收起按钮
+- [x] 同步设计、README 和端到端测试
+- [x] 本地重启并交给用户体验
+- **Status:** complete
+
+### Phase 13: 修复网页和文档横向溢出
+- [x] 移除大于面板最大宽度的 740px 应用壳最小宽度
+- [x] 将 WebView 和内容容器限制在剩余可读区域
+- [x] 增加视口、应用壳和 WebView 边界回归测试
+- [x] 完整回归并重启本地版本
+- **Status:** complete
+
+### Phase 14: 修复文件添加隐藏与 PPTX 标签切换卡顿
+- [x] 文件选择器打开期间暂停失焦隐藏
+- [x] 防止过期异步文件渲染覆盖当前标签
+- [x] 缓存已完成的 PPTX 预览以便即时切回
+- [x] 回归用户实际 `created_slides.pptx` 并重启本地版本
+- **Status:** complete
+
+### Phase 15: 修复网页内部视口不自适应
+- [x] 测量宿主内容区与 guest 网页内部视口
+- [x] 移除导致 WebView 以 300×150 初始化的 `display:none`
+- [x] WebView 保持真实尺寸，仅切换可见性和指针事件
+- [x] 验证 guest 视口与可见区域一致并重启本地版本
+- **Status:** complete
+
+### Phase 16: 发布 v0.2.1
+- [x] 整理版本范围与发布说明
+- [x] 完整测试、依赖审计和 Windows x64 构建
+- [x] 生成并核对 SHA-256
+- [ ] 提交、创建 PR 并合入 main
+- [ ] 发布 GitHub Release v0.2.1
+- **Status:** in_progress
+
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。
 2. PPT 如何在面板内显示？将纯 JavaScript PPTX 渲染器打进安装包；现代 PPTX 内嵌预览，不要求 PowerPoint。旧 `.ppt` 不具备同等的浏览器端开源渲染路径，需明确提示转换。
