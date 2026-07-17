@@ -204,7 +204,7 @@
   - 使用该 Markdown 文件更新 GitHub Release `v0.1.0`，复核标题、段落、表格、列表和 SHA-256 代码块均已正常呈现。
 
 ### Phase 9: 网页加载故障修复
-- **Status:** in_progress
+- **Status:** complete
 - Actions taken:
   - 在已安装的 Windows x64 `v0.1.0` 中加载百度 HTTPS 页面成功。
   - 确认现有 E2E 只覆盖成功加载本地 HTTP 页面，未覆盖导航失败和新窗口链接。
@@ -214,3 +214,5 @@
   - 完成错误页、重新加载、外部浏览器入口、当前页弹窗导航和 Chromium User-Agent 兼容处理。
   - `npm test` 全部通过，新增失败恢复、弹窗导航和 User-Agent 断言；`npm audit` 为 0 vulnerabilities。
   - 构建 `v0.1.1` Windows x64 安装版与便携版成功，解包主程序为 PE32+ x86-64。
+  - PR #2 以 merge commit `c1afa37` 合入 `main`。
+  - 发布 GitHub Release `v0.1.1`，安装版、便携版和校验文件均为 `uploaded`，远端摘要与本地一致。

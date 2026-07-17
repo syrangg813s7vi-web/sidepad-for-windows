@@ -93,6 +93,7 @@
 - 用户报告看板内网页打不开后，在已安装的 Windows x64 `v0.1.0` 中通过 CDP 直接加载 `https://www.baidu.com` 成功，证明 Chromium、HTTPS/TLS 和基本网络链路可用。
 - 当前网页容器没有监听 `did-fail-load`，加载失败时只会停留在遮罩或空白页；同时没有处理 webview 的 `new-window`，依赖 `target=_blank` 或 `window.open` 的链接可能表现为“点击没反应”。
 - Electron webview 只有保留 `allowpopups` 才会把 `window.open` 交给 guest 的 `setWindowOpenHandler`；安全做法是保留标志但在主进程拒绝创建新窗口，仅对白名单 HTTP/HTTPS 地址调用当前 guest 的 `loadURL()`。
+- GitHub Release `v0.1.1` 的安装版和便携版均已上传，GitHub 端 SHA-256 分别为 `3af691…f6bfeb` 与 `d26a2b…7cf58d`，与本地构建一致。
 
 ## Visual/Browser Findings
 - 2026-07-16 本地 1280×820 首次截图显示：侧栏和顶栏视觉正常，但隐藏浏览器地址栏时，工作区仍保留固定网格行，欢迎页被压缩。

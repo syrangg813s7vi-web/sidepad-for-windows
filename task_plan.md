@@ -80,8 +80,8 @@ Phase 9: 网页加载故障修复
 - [x] 捕获并展示 Chromium 导航错误，提供重试和外部浏览器入口
 - [x] 处理网页内 `target=_blank` / `window.open` 导航
 - [x] 增加失败、重试和弹窗导航自动化测试
-- [ ] 重新构建并发布修复版本
-- **Status:** in_progress
+- [x] 重新构建并发布修复版本
+- **Status:** complete
 
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。
