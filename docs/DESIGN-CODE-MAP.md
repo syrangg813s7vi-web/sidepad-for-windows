@@ -16,6 +16,9 @@
 | 34px 品牌按钮、40px 添加按钮、44px 内容入口 | `src/renderer/styles.css` | 首页视觉回归 |
 | 胶囊搜索和快捷卡片首页 | `src/renderer/index.html`、`styles.css`、`app.js` | `sidepad-preview.png` |
 | 网页 Chromium 持久会话 | `src/renderer/index.html`：`persist:sidepad` WebView | 登录后重启应用 |
+| 网页失败反馈与重试 | `src/renderer/app.js`：`did-fail-load`、`showWebError()` | E2E 持续断连后恢复服务并重试 |
+| 新窗口链接在当前网页打开 | `src/main.js`：`did-attach-webview`、`setWindowOpenHandler()` | E2E 执行 `window.open()` |
+| Chromium 兼容 User-Agent | `src/main.js`：`did-attach-webview` | 检查 guest 请求头不含 Electron 产品标识 |
 | 笔记自动保存 | `src/renderer/app.js`：`noteEditor` input 事件 | 输入后重启应用 |
 | PDF/图片/文本内嵌预览 | `src/main.js` 文件描述、`app.js`：`showFile()` | 添加样例文件 |
 | PPTX/DOCX/XLSX 自包含预览 | `index.html` 内置脚本、`app.js`：`showFile()` | 无 Office 环境打开样例 |

@@ -17,6 +17,7 @@ const fixtureDir = path.join(os.tmpdir(), `sidepad-e2e-files-${process.pid}`);
 let electron;
 let server;
 let logs = '';
+let failWebRequests = true;
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -114,9 +115,21 @@ async function createFixtures() {
 }
 
 function startFixtureServer() {
-  server = http.createServer((_, response) => {
+  server = http.createServer((request, response) => {
+    if (request.url === '/fails-once' && failWebRequests) {
+      response.destroy();
+      return;
+    }
     response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    response.end('<!doctype html><title>Sidepad Web QA</title><h1>Sidepad Web QA</h1>');
+    if (request.url === '/fails-once') {
+      response.end('<!doctype html><title>Sidepad Retry QA</title><h1>Recovered</h1>');
+    } else if (request.url === '/popup-source') {
+      response.end('<!doctype html><title>Popup Source</title><button onclick="window.open(\'/popup-target\', \'_blank\')">Open</button>');
+    } else if (request.url === '/popup-target') {
+      response.end('<!doctype html><title>Popup Target</title><h1>Same webview</h1>');
+    } else {
+      response.end('<!doctype html><title>Sidepad Web QA</title><h1>Sidepad Web QA</h1>');
+    }
   });
   return new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server.address().port)));
 }
@@ -210,6 +223,24 @@ async function run() {
   const web = { id: 'qa-web', type: 'web', name: 'Web QA', url: `http://127.0.0.1:${serverPort}`, color: '#4285f4' };
   await setActiveItem(main, web);
   await waitFor(() => main.eval('document.querySelector("#pageTitle")?.textContent === "Sidepad Web QA"'), 'Chromium webview did not load local page');
+  assert.equal(
+    await main.eval('!/Electron\\//.test(document.querySelector("#webview").getUserAgent())'),
+    true,
+    'webview user agent should not expose the Electron product token',
+  );
+
+  const failingWeb = { id: 'qa-fail', type: 'web', name: 'Retry QA', url: `http://127.0.0.1:${serverPort}/fails-once`, color: '#d55d54' };
+  await setActiveItem(main, failingWeb);
+  await waitFor(() => main.eval('document.querySelector("#webError")?.hidden === false'), 'web failure did not show an error');
+  failWebRequests = false;
+  await main.eval('document.querySelector("#webRetryButton").click()');
+  await waitFor(() => main.eval('document.querySelector("#pageTitle")?.textContent === "Sidepad Retry QA" && document.querySelector("#webError")?.hidden'), 'web retry did not recover');
+
+  const popupWeb = { id: 'qa-popup', type: 'web', name: 'Popup QA', url: `http://127.0.0.1:${serverPort}/popup-source`, color: '#258ffa' };
+  await setActiveItem(main, popupWeb);
+  await waitFor(() => main.eval('document.querySelector("#pageTitle")?.textContent === "Popup Source"'), 'popup source did not load');
+  await main.eval('document.querySelector("#webview").executeJavaScript("document.querySelector(\\"button\\").click()")');
+  await waitFor(() => main.eval('document.querySelector("#pageTitle")?.textContent === "Popup Target"'), 'target=_blank did not navigate the current webview');
 
   for (const [ext, assertion] of [
     ['docx', 'document.querySelector(".docx-stage")?.childElementCount > 0'],
@@ -246,6 +277,7 @@ async function run() {
   console.log('PASS edge-trigger expand and programmatic collapse');
   console.log('PASS note restore and autosave');
   console.log('PASS Chromium webview navigation');
+  console.log('PASS Chromium failure recovery and popup navigation');
   console.log('PASS DOCX, PPTX and XLSX self-contained previews');
 }
 

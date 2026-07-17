@@ -4,7 +4,7 @@
 交付一个可运行、可打包并发布到 GitHub 的自包含 Windows Sidepad：贴边自动隐藏，可承载 Chromium 网页、文本、图片、PDF 与 PPTX/Office 内容，安装后不依赖外部组件。
 
 ## Current Phase
-Phase 8: 文档排版修订
+Phase 9: 网页加载故障修复
 
 ## Phases
 
@@ -75,6 +75,14 @@ Phase 8: 文档排版修订
 - [x] 提交并推送文档修订
 - **Status:** complete
 
+### Phase 9: 网页加载故障修复
+- [x] 在真实 Windows x64 来宾复测公网 HTTPS 网页
+- [x] 捕获并展示 Chromium 导航错误，提供重试和外部浏览器入口
+- [x] 处理网页内 `target=_blank` / `window.open` 导航
+- [x] 增加失败、重试和弹窗导航自动化测试
+- [ ] 重新构建并发布修复版本
+- **Status:** in_progress
+
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。
 2. PPT 如何在面板内显示？将纯 JavaScript PPTX 渲染器打进安装包；现代 PPTX 内嵌预览，不要求 PowerPoint。旧 `.ppt` 不具备同等的浏览器端开源渲染路径，需明确提示转换。
@@ -133,6 +141,9 @@ Phase 8: 文档排版修订
 | `VGA + secondary-vga` 未形成 Windows 双桌面 | 1 | 主输出正常，副输出持续停留 TianoCore；记录为不支持并改测 `virtio-vga,max_outputs=2` |
 | `virtio-vga,max_outputs=2` 导致 Windows x64 蓝屏 | 1 | `IRQL_NOT_LESS_OR_EQUAL (0xA)` / `ntoskrnl.exe`，第二 head 未激活；立即恢复稳定单 VGA |
 | QEMU hostfwd 不能转发到来宾 127.0.0.1 CDP | 2 | 来宾内增加管理员 portproxy，将 0.0.0.0:9223 转到 127.0.0.1:9222 |
+| 连续执行 Windows CDP 公网测试时边缘 target 在 WebSocket 建连前消失 | 1 | 记录为测试环境 target 生命周期问题；下一次测试重新读取目标并避免复用已销毁页面 ID |
+| 网页错误测试未观察到失败页 | 1 | 单次断连被 Chromium 自动重试掩盖；夹具改为持续失败，观察错误页后再显式恢复服务 |
+| `target=_blank` 测试未在当前 webview 导航 | 1 | 没有 `allowpopups` 时 Chromium 在主进程 handler 前拦截；恢复标志并继续由 `setWindowOpenHandler` 白名单拒绝新窗口、改为当前页加载 |
 
 ## Notes
 - 每个阶段结束后同步更新本文件、`findings.md` 和 `progress.md`。
