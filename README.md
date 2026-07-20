@@ -8,13 +8,13 @@
 
 ## 下载
 
-当前版本：`v0.2.2`，适用于 Windows 10/11 x64。
+当前版本：`v0.2.3`，适用于 Windows 10/11 x64。
 
 | 版本 | 适用场景 | 下载 |
 |------|----------|------|
-| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.2.2 x64](../../releases/download/v0.2.2/Sidepad.Setup.0.2.2.exe) |
-| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.2.2 x64 Portable](../../releases/download/v0.2.2/Sidepad.0.2.2.exe) |
-| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](../../releases/download/v0.2.2/SHA256SUMS.txt) |
+| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.2.3 x64](../../releases/download/v0.2.3/Sidepad.Setup.0.2.3.exe) |
+| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.2.3 x64 Portable](../../releases/download/v0.2.3/Sidepad.0.2.3.exe) |
+| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](../../releases/download/v0.2.3/SHA256SUMS.txt) |
 
 安装包自带 Chromium 和文档预览运行时，不需要另外安装 Chrome、Microsoft Office 或 LibreOffice。
 
@@ -82,9 +82,10 @@ npm run dist:win:x64
 
 ## 验证状态
 
-`v0.2.2` 在既有 Windows 11 Enterprise Evaluation x64 验收基础上，新增固定宽度网页窄栏重排测试，并保留窄面板内容边界、WebView 内部视口、PDF 和 PPTX 标签切换自动化测试：
+`v0.2.3` 修复关闭生命周期和自动隐藏交互，并保留既有 Windows x64、窄面板内容边界、WebView 内部视口、PDF 和 PPTX 标签切换测试：
 
 - 边缘唤醒、未点击时鼠标离开自动隐藏、点击后保持展开和失焦隐藏。
+- 点击关闭后主窗口、边缘触发窗口和应用进程全部退出。
 - Chromium 网页加载和笔记持久化。
 - TXT、DOCX、PPTX、XLSX 内嵌预览，PPTX 多页连续布局测试。
 - 100%/150% DPI 窗口几何、主屏选择和双屏接缝逻辑测试。
