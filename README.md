@@ -2,19 +2,19 @@
 
 一个轻量的 Windows 侧边工作台。平时隐藏在屏幕右侧，鼠标移动到边缘时展开；点击其他窗口、按 `Esc` 或主动收起后隐藏。
 
-[下载最新版本](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/latest) · [设计文档](docs/DESIGN.md) · [Windows x64 验收记录](docs/WINDOWS-VM-VALIDATION.md)
+[下载最新版本](../../releases/latest) · [设计文档](docs/DESIGN.md) · [Windows x64 验收记录](docs/WINDOWS-VM-VALIDATION.md)
 
 ![Sidepad 界面预览](sidepad-preview.png)
 
 ## 下载
 
-当前版本：`v0.2.1`，适用于 Windows 10/11 x64。
+当前版本：`v0.2.2`，适用于 Windows 10/11 x64。
 
 | 版本 | 适用场景 | 下载 |
 |------|----------|------|
-| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.2.1 x64](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.1/Sidepad.Setup.0.2.1.exe) |
-| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.2.1 x64 Portable](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.1/Sidepad.0.2.1.exe) |
-| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.2.1/SHA256SUMS.txt) |
+| 安装版 | 推荐日常使用，安装后可直接启动 | [Sidepad Setup 0.2.2 x64](../../releases/download/v0.2.2/Sidepad.Setup.0.2.2.exe) |
+| 便携版 | 无需安装，适合临时使用或放入移动存储 | [Sidepad 0.2.2 x64 Portable](../../releases/download/v0.2.2/Sidepad.0.2.2.exe) |
+| 校验文件 | 核对下载文件的完整性 | [SHA256SUMS.txt](../../releases/download/v0.2.2/SHA256SUMS.txt) |
 
 安装包自带 Chromium 和文档预览运行时，不需要另外安装 Chrome、Microsoft Office 或 LibreOffice。
 
@@ -82,7 +82,7 @@ npm run dist:win:x64
 
 ## 验证状态
 
-`v0.2.1` 在既有 Windows 11 Enterprise Evaluation x64 验收基础上，新增窄面板内容边界、WebView 内部视口、PDF 和 PPTX 标签切换自动化测试：
+`v0.2.2` 在既有 Windows 11 Enterprise Evaluation x64 验收基础上，新增固定宽度网页窄栏重排测试，并保留窄面板内容边界、WebView 内部视口、PDF 和 PPTX 标签切换自动化测试：
 
 - 边缘唤醒、鼠标离开保持展开和失焦隐藏。
 - Chromium 网页加载和笔记持久化。
@@ -96,3 +96,4 @@ npm run dist:win:x64
 - [产品与技术设计](docs/DESIGN.md)
 - [设计—代码对应表](docs/DESIGN-CODE-MAP.md)
 - [Windows x64 验收记录](docs/WINDOWS-VM-VALIDATION.md)
+- [灾难恢复与数据备份](docs/DISASTER-RECOVERY.md)

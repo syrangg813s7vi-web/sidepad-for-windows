@@ -8,9 +8,9 @@ Sidepad 平时隐藏在屏幕右侧。将鼠标移动到边缘即可展开网页
 
 | 文件 | 说明 |
 |------|------|
-| [Sidepad.Setup.0.1.0.exe](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/Sidepad.Setup.0.1.0.exe) | Windows x64 安装版，推荐日常使用 |
-| [Sidepad.0.1.0.exe](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/Sidepad.0.1.0.exe) | Windows x64 便携版，无需安装 |
-| [SHA256SUMS.txt](https://github.com/syrangg813s7vi-web/sidepad-for-windows/releases/download/v0.1.0/SHA256SUMS.txt) | SHA-256 完整性校验 |
+| Sidepad Setup 0.1.0 | Windows x64 安装版，推荐日常使用 |
+| Sidepad 0.1.0 Portable | Windows x64 便携版，无需安装 |
+| SHA256SUMS.txt | SHA-256 完整性校验 |
 
 ## 本版功能
 

@@ -32,6 +32,8 @@ let pptxResizeTimer;
 let pptxRenderVersion = 0;
 let fileRenderVersion = 0;
 const pptxHtmlCache = new Map();
+let webFitVersion = 0;
+let webFitTimers = [];
 
 function loadItems() {
   try {
@@ -141,6 +143,66 @@ function showWebError(event) {
   els.webErrorTitle.textContent = '网页无法打开';
   els.webErrorDetail.textContent = `${event.errorDescription || '网络请求失败'}（${event.errorCode}）`;
   els.webError.hidden = false;
+}
+
+function resetWebFit() {
+  webFitVersion += 1;
+  webFitTimers.forEach(clearTimeout);
+  webFitTimers = [];
+  try { els.webview.setZoomFactor(1); } catch {}
+}
+
+async function fitWebContent(version) {
+  if (version !== webFitVersion || items.find(item => item.id === activeId)?.type !== 'web') return;
+  try {
+    let metrics = await els.webview.executeJavaScript(`({
+      viewportWidth: innerWidth,
+      contentWidth: Math.max(
+        document.documentElement?.scrollWidth || 0,
+        document.body?.scrollWidth || 0
+      )
+    })`);
+    if (version !== webFitVersion || metrics.contentWidth <= metrics.viewportWidth + 4) return;
+    await els.webview.executeJavaScript(`new Promise(resolve => {
+      let style = document.querySelector('#sidepad-narrow-reflow');
+      if (!style) {
+        style = document.createElement('style');
+        style.id = 'sidepad-narrow-reflow';
+        style.textContent = \`
+          html, body {
+            min-width: 0 !important;
+            max-width: 100vw !important;
+          }
+          body > * {
+            min-width: 0 !important;
+            max-width: 100vw !important;
+          }
+          img, video, canvas, svg, iframe {
+            max-width: 100% !important;
+          }
+        \`;
+        (document.head || document.documentElement).appendChild(style);
+      }
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    })`);
+    metrics = await els.webview.executeJavaScript(`({
+      viewportWidth: innerWidth,
+      contentWidth: Math.max(
+        document.documentElement?.scrollWidth || 0,
+        document.body?.scrollWidth || 0
+      )
+    })`);
+    if (version !== webFitVersion || metrics.contentWidth <= metrics.viewportWidth + 4) return;
+    const currentZoom = els.webview.getZoomFactor();
+    const nextZoom = Math.max(0.45, Math.min(1, currentZoom * metrics.viewportWidth / metrics.contentWidth * 0.97));
+    if (Math.abs(nextZoom - currentZoom) >= 0.01) els.webview.setZoomFactor(nextZoom);
+  } catch {}
+}
+
+function scheduleWebFit() {
+  const version = webFitVersion;
+  webFitTimers.forEach(clearTimeout);
+  webFitTimers = [0, 350, 1200].map(delay => setTimeout(() => fitWebContent(version), delay));
 }
 
 async function showFile(item, renderVersion) {
@@ -393,6 +455,7 @@ els.favoriteButton.addEventListener('click', () => {
 });
 
 els.webview.addEventListener('did-start-loading', () => {
+  resetWebFit();
   els.webError.hidden = true;
   els.loading.classList.add('visible');
 });
@@ -403,6 +466,7 @@ els.webview.addEventListener('did-stop-loading', () => {
   els.pageTitle.textContent = els.webview.getTitle() || hostOf(els.webview.getURL());
   els.pageHost.textContent = hostOf(els.webview.getURL());
   updateFavoriteState();
+  scheduleWebFit();
 });
 els.webview.addEventListener('page-title-updated', event => { els.pageTitle.textContent = event.title; });
 els.webview.addEventListener('did-navigate', event => { lastRequestedUrl = event.url; els.addressInput.value = event.url; els.pageHost.textContent = hostOf(event.url); updateFavoriteState(); });
