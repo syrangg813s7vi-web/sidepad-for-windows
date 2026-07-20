@@ -6,8 +6,10 @@
 |----------|----------|----------|
 | 面板最大宽度 680px、最小 520px、显示器宽度约 42% | `src/window-layout.js`：`calculatePanelBounds()` | `tests/window-layout.test.js` 的分辨率与 150% DPI 测试 |
 | 展开/收起动画 180ms | `src/main.js`：`ANIMATION_MS`、`animateTo()` | 录屏或计时检查 |
-| 鼠标离开后保持展开 | `src/renderer/app.js`：不注册全局 `mouseleave` 收起事件 | E2E 移出后等待 800ms，面板仍展开 |
-| 失焦 480ms 收起 | `src/main.js`：`mainWindow.on('blur')`、`scheduleCollapse()` | 点击并切换到其他窗口 |
+| 悬停预览不抢焦点，未点击离开后收起 | `src/main.js`：`expandPanel({ focus: false })`、`panel-leave`；`src/renderer/app.js`：全局进入/离开事件 | E2E 未交互离开后自动收起 |
+| 点击后锁定，鼠标离开保持展开 | `src/main.js`：`isInteractionLocked`、窗口 `focus`、`panel-pin` | E2E pointerdown 后移出并等待 800ms 仍展开 |
+| 失焦 480ms 收起并解锁 | `src/main.js`：`mainWindow.on('blur')`、`scheduleCollapse()` | 点击并切换到其他窗口 |
+| 关闭按钮退出全部窗口和进程 | `src/main.js`：`quitApplication()`、`destroyTriggerWindows()` | E2E 点击关闭后等待 Electron 子进程退出 |
 | 触发条宽 12px | `src/window-layout.js`：`calculateTriggerBounds()` | 布局单元测试 |
 | 触发防误触 140ms | `src/renderer/edge.html` | 快速跨过边缘不展开 |
 | 仅 Windows 主屏激活 | `src/main.js`：`getPrimaryDisplay()`、`rebuildTriggerWindows()`；`src/window-layout.js`：`selectPrimaryDisplay()` | 主屏选择单元测试；双屏确认仅创建一个触发窗口 |

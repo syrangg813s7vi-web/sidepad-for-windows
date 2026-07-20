@@ -1,7 +1,7 @@
 const $ = (selector) => document.querySelector(selector);
 if (!window.sidepad) {
   window.sidepad = {
-    enter() {}, collapse() {}, close() {},
+    enter() {}, pin() {}, leave() {}, collapse() {}, close() {},
     openExternal() {}, pickFiles: async () => [], openFile() {}, revealFile() {},
     importFiles: async () => [], pathForFile: () => '', authorizeFile: async () => false, onPanelState() {},
   };
@@ -381,6 +381,9 @@ function appendFiles(files) {
 }
 
 els.edgeHandle.addEventListener('mouseenter', () => window.sidepad.enter());
+document.addEventListener('mouseenter', () => window.sidepad.enter());
+document.addEventListener('mouseleave', () => window.sidepad.leave());
+document.addEventListener('pointerdown', () => window.sidepad.pin(), true);
 document.addEventListener('dragover', event => {
   event.preventDefault();
   document.body.classList.add('dragging-file');
@@ -390,6 +393,7 @@ document.addEventListener('dragleave', event => {
 });
 document.addEventListener('drop', async event => {
   event.preventDefault();
+  window.sidepad.pin();
   document.body.classList.remove('dragging-file');
   const paths = [...event.dataTransfer.files].map(file => window.sidepad.pathForFile(file)).filter(Boolean);
   if (paths.length) appendFiles(await window.sidepad.importFiles(paths));
