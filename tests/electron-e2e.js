@@ -209,11 +209,20 @@ async function run() {
   await edge.eval('window.sidepad.enter()');
   await waitFor(() => main.eval('document.body.classList.contains("expanded")'), 'edge trigger did not expand panel');
   await main.eval('document.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }))');
-  await new Promise(resolve => setTimeout(resolve, 800));
+  await waitFor(
+    async () => !(await main.eval('document.body.classList.contains("expanded")')),
+    'an unclicked hover preview should collapse after pointer leave',
+  );
+
+  await edge.eval('window.sidepad.enter()');
+  await waitFor(() => main.eval('document.body.classList.contains("expanded")'), 'edge trigger did not reopen panel');
+  await main.eval('window.sidepad.pin()');
+  await main.eval('document.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }))');
+  await sleep(800);
   assert.equal(
     await main.eval('document.body.classList.contains("expanded")'),
     true,
-    'moving the pointer away should keep the panel expanded',
+    'an interacted panel should remain expanded after pointer leave',
   );
   await main.eval('window.sidepad.collapse()');
   await waitFor(async () => !(await main.eval('document.body.classList.contains("expanded")')), 'panel did not collapse');
@@ -350,14 +359,19 @@ async function run() {
     }
   }
 
+  const appExited = new Promise(resolve => electron.once('exit', resolve));
+  await main.eval('document.querySelector("#closeButton").click()');
+  await Promise.race([appExited, sleep(5000)]);
+  assert.notEqual(electron.exitCode, null, 'close button should terminate the entire Electron process');
   main.close();
   edge.close();
   console.log('PASS homepage and bundled renderer availability');
-  console.log('PASS edge-trigger expand, pointer-leave persistence and programmatic collapse');
+  console.log('PASS hover-preview collapse, click-lock persistence and programmatic collapse');
   console.log('PASS note restore and autosave');
   console.log('PASS Chromium webview navigation');
   console.log('PASS Chromium failure recovery and popup navigation');
   console.log('PASS PDF, DOCX, PPTX and XLSX self-contained previews');
+  console.log('PASS close button terminates the main window, edge trigger and app process');
 }
 
 async function cleanup() {

@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('sidepad', {
   enter: () => ipcRenderer.send('panel-enter'),
+  pin: () => ipcRenderer.send('panel-pin'),
+  leave: () => ipcRenderer.send('panel-leave'),
   collapse: () => ipcRenderer.send('panel-collapse'),
   close: () => ipcRenderer.send('window-close'),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),

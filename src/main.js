@@ -11,10 +11,12 @@ const {
 } = require('./window-layout');
 
 const ANIMATION_MS = 180;
+const PREVIEW_LEAVE_DELAY_MS = 260;
 const WINDOWS_APP_ID = 'com.sidepad.windows';
 
 let mainWindow;
 let isExpanded = false;
+let isInteractionLocked = false;
 let collapseTimer;
 let animationFrame;
 let isFileDialogOpen = false;
@@ -76,8 +78,9 @@ function animateTo(target, done) {
   }, 16);
 }
 
-function expandPanel({ focus = true } = {}) {
+function expandPanel({ focus = false } = {}) {
   clearTimeout(collapseTimer);
+  if (focus) isInteractionLocked = true;
   if (isExpanded) {
     if (focus) mainWindow?.focus();
     return;
@@ -94,6 +97,7 @@ function expandPanel({ focus = true } = {}) {
 
 function collapsePanel() {
   clearTimeout(collapseTimer);
+  isInteractionLocked = false;
   if (!isExpanded || !mainWindow || mainWindow.isDestroyed()) return;
   isExpanded = false;
   mainWindow.webContents.send('panel-state', { expanded: false });
@@ -103,6 +107,38 @@ function collapsePanel() {
 function scheduleCollapse(delay = 480) {
   clearTimeout(collapseTimer);
   collapseTimer = setTimeout(collapsePanel, delay);
+}
+
+function pinPanelInteraction() {
+  if (!isExpanded || !mainWindow || mainWindow.isDestroyed()) return;
+  clearTimeout(collapseTimer);
+  isInteractionLocked = true;
+  mainWindow.focus();
+}
+
+function schedulePreviewCollapse() {
+  if (!isExpanded || isInteractionLocked) return;
+  scheduleCollapse(PREVIEW_LEAVE_DELAY_MS);
+}
+
+function destroyTriggerWindows() {
+  for (const trigger of [...triggerWindows.values()]) {
+    if (!trigger.isDestroyed()) trigger.destroy();
+  }
+  triggerWindows.clear();
+}
+
+function quitApplication() {
+  clearTimeout(collapseTimer);
+  if (animationFrame) {
+    clearInterval(animationFrame);
+    animationFrame = null;
+  }
+  isExpanded = false;
+  isInteractionLocked = false;
+  destroyTriggerWindows();
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy();
+  app.quit();
 }
 
 function createWindow() {
@@ -132,10 +168,19 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.on('focus', () => {
+    if (!isExpanded) return;
+    clearTimeout(collapseTimer);
+    isInteractionLocked = true;
+  });
   mainWindow.on('blur', () => {
     if (!isFileDialogOpen) scheduleCollapse();
   });
-  mainWindow.on('closed', () => { mainWindow = null; });
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+    isExpanded = false;
+    isInteractionLocked = false;
+  });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//i.test(url)) shell.openExternal(url);
@@ -183,18 +228,17 @@ function createTriggerWindow(display, sharedEdge) {
 }
 
 function rebuildTriggerWindows() {
-  for (const trigger of triggerWindows.values()) {
-    if (!trigger.isDestroyed()) trigger.destroy();
-  }
-  triggerWindows.clear();
+  destroyTriggerWindows();
   const displays = screen.getAllDisplays();
   const primaryDisplay = getPrimaryDisplay();
   createTriggerWindow(primaryDisplay, hasDisplayOnRight(primaryDisplay, displays));
 }
 
-ipcMain.on('panel-enter', () => expandPanel({ focus: true }));
+ipcMain.on('panel-enter', () => expandPanel({ focus: false }));
+ipcMain.on('panel-pin', () => pinPanelInteraction());
+ipcMain.on('panel-leave', () => schedulePreviewCollapse());
 ipcMain.on('panel-collapse', () => collapsePanel());
-ipcMain.on('window-close', () => mainWindow?.close());
+ipcMain.on('window-close', () => quitApplication());
 ipcMain.handle('open-external', (_, url) => {
   if (/^https?:\/\//i.test(url)) return shell.openExternal(url);
   return false;

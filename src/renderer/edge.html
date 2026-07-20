@@ -25,7 +25,10 @@
       document.body.addEventListener('mouseenter', () => {
         timer = setTimeout(() => window.sidepad.enter(), 140);
       });
-      document.body.addEventListener('mouseleave', () => clearTimeout(timer));
+      document.body.addEventListener('mouseleave', () => {
+        clearTimeout(timer);
+        window.sidepad.leave();
+      });
     </script>
   </body>
 </html>
