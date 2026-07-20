@@ -229,5 +229,5 @@ Phase 19: 发布 v0.2.2
 - [x] 更新版本号、README 和发布说明
 - [x] 增加灾难恢复与用户数据备份/恢复说明
 - [x] 完成测试、Windows x64 构建和校验
-- [ ] 提交、合入并发布 GitHub Release
-- **Status:** in_progress
+- [x] 提交、合入并发布 GitHub Release
+- **Status:** complete
