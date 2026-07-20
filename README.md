@@ -18,6 +18,8 @@
 
 安装包自带 Chromium 和文档预览运行时，不需要另外安装 Chrome、Microsoft Office 或 LibreOffice。
 
+如果 GitHub 下载较慢，请打开对应版本的 Release 说明并选择“腾讯云高速下载”。镜像文件必须与 GitHub Release 中的 `SHA256SUMS.txt` 一致；GitHub Release 始终是权威发布源。
+
 > 当前版本尚未配置商业 Authenticode 证书。Windows 可能显示“未知发布者”或 SmartScreen 提示。
 
 ## 主要功能
@@ -96,4 +98,5 @@ npm run dist:win:x64
 - [产品与技术设计](docs/DESIGN.md)
 - [设计—代码对应表](docs/DESIGN-CODE-MAP.md)
 - [Windows x64 验收记录](docs/WINDOWS-VM-VALIDATION.md)
+- [Release 下载镜像设计](docs/RELEASE-MIRROR.md)
 - [灾难恢复与数据备份](docs/DISASTER-RECOVERY.md)

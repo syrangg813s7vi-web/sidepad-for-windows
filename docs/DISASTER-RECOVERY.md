@@ -13,6 +13,7 @@ Sidepad 的代码、文档和声明式构建配置以 GitHub 仓库为权威来�
 
 - 应用源代码、设计、测试和构建命令：Git 仓库。
 - 安装版、便携版及 SHA-256：GitHub Release。
+- 腾讯云下载镜像：GitHub Release 的可重建缓存，仅保留最近 3 个版本，不是权威数据源。
 - Sidepad 设置、网页会话、笔记和项目列表：`%APPDATA%\sidepad-for-windows`。
 - 用户添加的 PDF、PPTX 等原始文件仍在用户选择的位置；Sidepad 只保存路径，不复制原文件，必须由用户现有备份方案单独保护。
 - 当前构建不需要生产密钥。GitHub 登录凭据保留在开发机凭据存储中，不进入仓库。
@@ -46,7 +47,7 @@ Sidepad 的代码、文档和声明式构建配置以 GitHub 仓库为权威来�
 6. 使用 `Get-FileHash -Algorithm SHA256` 生成或核对附件摘要。
 7. 在 Windows 10/11 x64 干净环境中安装并完成边缘唤醒、失焦隐藏、网页和文档预览检查。
 
-DNS 和自管 TLS 不适用于本项目；代码与附件由 GitHub 托管。若 GitHub 暂时不可用，使用已校验的离机镜像恢复仓库和最近正式附件，服务恢复后再核对提交 SHA、标签和附件摘要。
+下载镜像的 SSH、DNS 和 TLS 是仓库外配置，真实主机、账号、域名和密钥只保存在服务器配置、GitHub Secrets/Variables 与批准的密钥恢复位置。若镜像服务器丢失，按 [Release 下载镜像设计](RELEASE-MIRROR.md) 从 GitHub Release 重建；若 GitHub 暂时不可用，使用已校验的离机镜像恢复最近正式附件，服务恢复后再核对提交 SHA、标签和附件摘要。
 
 ## 验证与回滚
 
@@ -54,3 +55,4 @@ DNS 和自管 TLS 不适用于本项目；代码与附件由 GitHub 托管。若
 - 数据检查：恢复后项目数量、笔记内容及关键网页登录状态符合预期，原始文档路径仍可访问。
 - 版本回滚：卸载当前版本，安装上一 GitHub Release；如数据迁移导致异常，退出应用并将恢复脚本留下的回滚目录还原为 `%APPDATA%\sidepad-for-windows`。
 - 发布前至少进行一次干净目录的 `npm ci` 与 `npm test` 恢复演练；Windows 用户数据脚本需要在 Windows x64 环境中定期抽样恢复验证。
+- 镜像恢复演练：在空目录中重新镜像一个既有 Release，验证 HTTPS、`latest` 和 SHA-256；不得以镜像服务器本地文件作为唯一恢复来源。

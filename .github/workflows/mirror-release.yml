@@ -1,0 +1,103 @@
+name: Mirror GitHub Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub Release tag to mirror
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-mirror-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MIRROR_SSH_HOST: ${{ secrets.MIRROR_SSH_HOST }}
+      MIRROR_SSH_PORT: ${{ secrets.MIRROR_SSH_PORT }}
+      MIRROR_SSH_USER: ${{ secrets.MIRROR_SSH_USER }}
+      MIRROR_RELEASE_PATH: ${{ secrets.MIRROR_RELEASE_PATH }}
+      MIRROR_RETENTION: "3"
+
+    steps:
+      - name: Check out release tooling
+        uses: actions/checkout@v4
+
+      - name: Select release tag
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ github.event.release.tag_name || inputs.tag }}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then
+            echo "Invalid release tag: $tag" >&2
+            exit 2
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Download authoritative Release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          gh release download "${{ steps.release.outputs.tag }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir release-assets
+          test -f release-assets/SHA256SUMS.txt
+          (
+            cd release-assets
+            sha256sum -c SHA256SUMS.txt
+          )
+
+      - name: Configure mirror SSH identity
+        shell: bash
+        env:
+          MIRROR_SSH_PRIVATE_KEY: ${{ secrets.MIRROR_SSH_PRIVATE_KEY }}
+          MIRROR_SSH_KNOWN_HOSTS: ${{ secrets.MIRROR_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 0700 "$HOME/.ssh"
+          printf '%s\n' "$MIRROR_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$MIRROR_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 0600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Publish and retain three versions
+        shell: bash
+        run: |
+          tools/publish-release-mirror.sh \
+            "${{ steps.release.outputs.tag }}" \
+            release-assets
+
+      - name: Add mirror link to Release notes
+        if: ${{ vars.MIRROR_PUBLIC_BASE_URL != '' }}
+        shell: bash
+        env:
+          MIRROR_PUBLIC_BASE_URL: ${{ vars.MIRROR_PUBLIC_BASE_URL }}
+        run: |
+          set -euo pipefail
+          tag="${{ steps.release.outputs.tag }}"
+          marker="<!-- sidepad-download-mirror -->"
+          body="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json body --jq .body)"
+          if grep -Fq "$marker" <<<"$body"; then
+            exit 0
+          fi
+          base="${MIRROR_PUBLIC_BASE_URL%/}"
+          {
+            printf '%s\n\n' "$body"
+            printf '%s\n' "$marker"
+            printf '## 国内下载镜像\n\n'
+            printf '[腾讯云高速下载](%s/latest/) · 下载后请核对 `SHA256SUMS.txt`。\n' "$base"
+          } > release-notes.md
+          gh release edit "$tag" \
+            --repo "$GITHUB_REPOSITORY" \
+            --notes-file release-notes.md
