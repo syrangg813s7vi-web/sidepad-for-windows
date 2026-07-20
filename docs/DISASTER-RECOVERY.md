@@ -40,7 +40,7 @@ Sidepad 的代码、文档和声明式构建配置以 GitHub 仓库为权威来�
 
 1. 安装 Git、Node.js 22 和 npm。
 2. 从权威 GitHub 仓库克隆代码并检出所需发布标签。
-3. 执行 `npm ci` 恢复锁定依赖。
+3. 执行 `npm ci` 恢复锁定依赖；项目的 `postinstall` 会在测试前预取当前平台的 Electron 运行时。
 4. 执行 `npm test` 验证源码。
 5. 执行 `npm run dist:win:x64` 重建安装版和便携版。
 6. 使用 `Get-FileHash -Algorithm SHA256` 生成或核对附件摘要。

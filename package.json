@@ -11,6 +11,7 @@
     "pptx-preview": "^1.0.7"
   },
   "scripts": {
+    "postinstall": "install-electron --no",
     "start": "electron .",
     "dev": "electron . --dev",
     "check": "node --check src/main.js && node --check src/window-layout.js && node --check src/preload.js && node --check src/renderer/app.js",
