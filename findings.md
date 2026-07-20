@@ -83,7 +83,7 @@
 - 热插拔的新 USB 验证 ISO 未获得预期的 I:/J:/K: 盘符；为保证确定性，后续改用 QMP 将已知为 E: 的可移除 `testcd` 直接换片为修正版验证 ISO。
 - Windows Run 对话框刚获得焦点时可能吞掉第一枚 QMP 按键；以空格开头输入命令可稳定规避，因为 `cmd`/Run 会忽略命令前导空白。
 - 修正版 Win32 报告在 Windows 11 Enterprise Evaluation x64 Build 26200 上通过：1280×800 单屏中展开面板宽 554px、左边界 734、收起可见宽度 0px，边缘唤出和自动隐藏均为 true。
-- 安装后的 `Sidepad.exe` 运行路径为 `C:\Users\sidepad\AppData\Local\Programs\Sidepad\Sidepad.exe`，来宾报告确认 `PROCESSOR_ARCHITECTURE=AMD64` 且本地 CDP ready。
+- 安装后的 `Sidepad.exe` 运行路径位于 `%LOCALAPPDATA%\Programs\Sidepad\Sidepad.exe`，来宾报告确认 `PROCESSOR_ARCHITECTURE=AMD64` 且本地 CDP ready。
 - QEMU `VGA + secondary-vga` 能同时创建两个可截图的显卡输出，但 Windows 登录后只接管主 VGA；副输出持续停留在 TianoCore 固件画面，不能算作 Windows 双屏。
 - 未安装匹配显示驱动的 Windows x64 来宾不能直接切换到 `virtio-vga,max_outputs=2`：本次启动触发 `IRQL_NOT_LESS_OR_EQUAL (0xA)`，失败模块显示为 `ntoskrnl.exe`，第二 head 未激活。
 - 当前 QEMU 环境的两个双屏候选都不能提供“两个被 Windows 正常识别的桌面输出”；后续产品策略已改为仅主屏触发，副屏不触发仍需 Hyper-V/VMware/真实双显示器或预装匹配 virtio 显示驱动的来宾补充验收。

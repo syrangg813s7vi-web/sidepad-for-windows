@@ -127,6 +127,8 @@ function startFixtureServer() {
       response.end('<!doctype html><title>Popup Source</title><button onclick="window.open(\'/popup-target\', \'_blank\')">Open</button>');
     } else if (request.url === '/popup-target') {
       response.end('<!doctype html><title>Popup Target</title><h1>Same webview</h1>');
+    } else if (request.url === '/fixed-width') {
+      response.end('<!doctype html><title>Fixed Width QA</title><style>html,body{margin:0;min-width:1100px}main{width:1100px;height:600px;background:#f4efe7}</style><main>Desktop-width content</main>');
     } else {
       response.end('<!doctype html><title>Sidepad Web QA</title><h1>Sidepad Web QA</h1>');
     }
@@ -261,6 +263,15 @@ async function run() {
     widthMatches: true,
     heightMatches: true,
   }, 'guest webpage viewport must match the visible WebView size');
+
+  const fixedWidthWeb = { id: 'qa-fixed-width', type: 'web', name: 'Fixed Width QA', url: `http://127.0.0.1:${serverPort}/fixed-width`, color: '#7a624b' };
+  await setActiveItem(main, fixedWidthWeb);
+  await waitFor(() => main.eval('document.querySelector("#pageTitle")?.textContent === "Fixed Width QA"'), 'fixed-width page did not load');
+  await waitFor(() => main.eval(`(async () => {
+    const webview = document.querySelector('#webview');
+    const metrics = await webview.executeJavaScript('({ viewportWidth: innerWidth, contentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) })');
+    return webview.getZoomFactor() >= 0.99 && metrics.contentWidth <= metrics.viewportWidth + 4;
+  })()`), 'fixed-width page was not reflowed into the WebView at a readable zoom', 5000);
 
   const failingWeb = { id: 'qa-fail', type: 'web', name: 'Retry QA', url: `http://127.0.0.1:${serverPort}/fails-once`, color: '#d55d54' };
   await setActiveItem(main, failingWeb);

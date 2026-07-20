@@ -4,7 +4,7 @@
 交付一个可运行、可打包并发布到 GitHub 的自包含 Windows Sidepad：贴边自动隐藏，可承载 Chromium 网页、文本、图片、PDF 与 PPTX/Office 内容，安装后不依赖外部组件。
 
 ## Current Phase
-Phase 11: 依次实现 Issue #4、#5、#3
+Phase 19: 发布 v0.2.2
 
 ## Phases
 
@@ -135,6 +135,20 @@ Phase 11: 依次实现 Issue #4、#5、#3
 - [x] 发布 GitHub Release v0.2.1
 - **Status:** complete
 
+### Phase 17: 新网页内容自动适配
+- [x] 区分宿主边界与网页自身固定宽度溢出
+- [x] 响应式网页保持 100%，溢出网页按内容宽度自动缩放
+- [x] 新导航重置缩放并延迟复测动态内容
+- [x] 固定 1100px 网页回归通过并重启本地版本
+- **Status:** complete
+
+### Phase 18: Windows x64 现场启动验证
+- [ ] 从遗留蓝屏状态恢复 Windows x64 虚拟机
+- [ ] 打开已安装的 Sidepad
+- [ ] 验证主屏边缘唤醒、失焦隐藏和网页内容
+- [ ] 记录截图、结果和异常
+- **Status:** in_progress
+
 ## Key Questions
 1. “Chrome 页面”如何实现？使用 Electron 内置 Chromium 的 `<webview>`，无需外部 Chrome 进程，同时保留系统浏览器打开入口。
 2. PPT 如何在面板内显示？将纯 JavaScript PPTX 渲染器打进安装包；现代 PPTX 内嵌预览，不要求 PowerPoint。旧 `.ppt` 不具备同等的浏览器端开源渲染路径，需明确提示转换。
@@ -200,7 +214,20 @@ Phase 11: 依次实现 Issue #4、#5、#3
 | 三页 PPTX 测试文件被 `pptx-preview` 解析为 0 页 | 1 | 库内部吞掉具体解析异常；先用最小三页文件隔离连续布局测试，再逐项加回文本内容定位兼容触发项 |
 | Web 工具拒绝直接打开 `501351981.github.io` 演示地址 | 1 | 改用限定官方 GitHub Pages 域名的搜索查询定位可下载样例，不重复直接 open |
 | 使用 `/Applications/LibreOffice.app/.../soffice` 归一化测试 PPTX 时路径不存在 | 1 | `command -v soffice` 已返回工作区依赖运行时路径；后续使用该实际路径，不重复假设 Applications 安装位置 |
+| Windows x64 现场验证前虚拟机停在 `IRQL_NOT_LESS_OR_EQUAL (0xA)` / `ntoskrnl.exe` 蓝屏 | 1 | 记录遗留来宾状态；通过 QMP 重置后再进行 Sidepad 验证 |
+| Windows 更新完成 96% 后启动失败，WinRE“正在尝试修复”长时间无磁盘 I/O | 2 | 不强制修改系统盘；关闭已运行三天的 QEMU 进程并以稳定单 VGA 配置冷启动 |
+| 单 VGA 冷启动仍立即触发 `IRQL_NOT_LESS_OR_EQUAL (0xA)` | 3 | 排除 QEMU 长运行状态；改用 WinRE 卸载最新质量更新，保留应用和用户数据 |
+| 磁盘内 WinRE 自动修复环境也触发相同 `0xA` 蓝屏 | 4 | 从微软原版安装 ISO 启动独立 WinPE，离线撤销待处理更新 |
+| QMP `boot_set d` 未覆盖设备显式 `bootindex` | 1 | 启动脚本增加可复用的 `SIDEPAD_VM_BOOT_SOURCE=iso`，同步交换磁盘与 ISO 启动优先级 |
 
 ## Notes
 - 每个阶段结束后同步更新本文件、`findings.md` 和 `progress.md`。
 - GitHub 发布前必须检查差异、登录账号和仓库可见性。
+
+### Phase 19: 发布 v0.2.2
+- [x] 固化网页窄栏重排设计与自动化验收
+- [x] 更新版本号、README 和发布说明
+- [x] 增加灾难恢复与用户数据备份/恢复说明
+- [x] 完成测试、Windows x64 构建和校验
+- [ ] 提交、合入并发布 GitHub Release
+- **Status:** in_progress

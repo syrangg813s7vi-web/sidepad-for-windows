@@ -1,6 +1,6 @@
 {
   "name": "sidepad-for-windows",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A self-contained, primary-screen, auto-hiding content side panel for Windows.",
   "main": "src/main.js",
   "author": "Sidepad",

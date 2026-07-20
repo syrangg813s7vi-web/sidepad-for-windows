@@ -22,6 +22,7 @@
 | 未就绪 WebView 不阻断标签切换 | `src/renderer/app.js`：`updateFavoriteState()` | 从 PPTX 切到笔记再切回，不调用未就绪 WebView 的 `getURL()` |
 | 网页和文档不超出窄面板边界 | `src/renderer/styles.css`：`.app-shell`、`.webview-wrap`、`webview` | E2E 检查文档、应用壳和 WebView 右边界均不超过视口 |
 | 网页内部视口与可见区域一致 | `src/renderer/styles.css`：WebView 始终保持尺寸，仅用 `visibility` 隐藏 | E2E 对比 guest `innerWidth/innerHeight` 与 WebView 边界 |
+| 非响应式网页自动适配窄面板 | `src/renderer/app.js`：`fitWebContent()`、`scheduleWebFit()` | E2E 加载 1100px 固定宽网页，确认先重排并保持 100% 字号；无法重排时才缩放 |
 | 笔记自动保存 | `src/renderer/app.js`：`noteEditor` input 事件 | 输入后重启应用 |
 | PDF/图片/文本内嵌预览 | `src/main.js` 文件描述、`app.js`：`showFile()` | 添加样例文件 |
 | PPTX/DOCX/XLSX 自包含预览 | `index.html` 内置脚本、`app.js`：`showFile()` | 无 Office 环境打开样例 |

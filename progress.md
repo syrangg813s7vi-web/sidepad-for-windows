@@ -1,5 +1,26 @@
 # Progress Log
 
+## Session: 2026-07-20
+
+### Phase 18: Windows x64 现场启动验证
+- **Status:** in_progress
+- Actions taken:
+  - 检查运行中的 Windows x64 虚拟机，发现来宾停在 `IRQL_NOT_LESS_OR_EQUAL (0xA)` 蓝屏，失败模块为 `ntoskrnl.exe`。
+  - QEMU 进程和 QMP 控制通道仍在线，但 QGA 因来宾蓝屏离线。
+  - 重置后 Windows 继续处理更新至 96%，更新完成并自动重启。
+  - 更新后的启动进入 WinRE 自动修复；连续 10 秒系统盘无读写，判断修复界面已经卡住。
+  - 决定关闭已运行三天的旧 QEMU 进程，并用版本化脚本和单 VGA 配置冷启动。
+  - 单 VGA 冷启动仍立即复现 `IRQL_NOT_LESS_OR_EQUAL (0xA)`，确认故障在 Windows 更新后的来宾系统状态。
+  - 下一步使用 WinRE 卸载最新质量更新，不删除应用或用户数据。
+  - 磁盘内 WinRE 自动修复环境也触发同一 `0xA` 蓝屏，无法进入高级恢复菜单。
+  - 改从已校验的微软原版安装 ISO 启动独立 WinPE，准备离线撤销待处理更新。
+  - QMP 临时 `boot_set d` 未覆盖设备显式 `bootindex`；为 VM 启动脚本增加 `SIDEPAD_VM_BOOT_SOURCE=disk|iso`。
+  - 通过 ISO 启动原版 WinPE，确认离线 Windows 位于 `C:\Windows`。
+  - 执行 `dism /image:C:\ /cleanup-image /revertpendingactions`，DISM 返回“操作成功完成”。
+- Next:
+  - 重置并恢复 Windows，登录后打开已安装的 Sidepad。
+  - 验证边缘唤醒、失焦隐藏和网页内容。
+
 ## Session: 2026-07-16
 
 ### Phase 1: 需求与技术边界
@@ -63,7 +84,7 @@
 ### Phase 5: GitHub 发布
 - **Status:** complete
 - Actions taken:
-  - 创建私有仓库 `syrangg813s7vi-web/sidepad-for-windows`。
+  - 创建 GitHub 代码仓库并设置为权威代码源。
   - 提交项目代码、设计文档、进度文档和界面预览。
   - 将本地 `main` 推送到 GitHub 并设置上游分支。
 
@@ -257,7 +278,7 @@
 ### Phase 14: 修复文件添加隐藏与 PPTX 标签切换卡顿
 - **Status:** in_progress
 - Actions taken:
-  - 本地状态确认用户的 PPTX 没有进入列表；直接导入 `/Users/tinyfox/Downloads/created_slides.pptx` 后约 5 秒成功渲染 2 页，排除文件完全不兼容。
+  - 本地状态确认用户的 PPTX 没有进入列表；直接导入用户提供的约 2.1 MB PPTX 样例后约 5 秒成功渲染 2 页，排除文件完全不兼容。
   - 文件选择器打开期间暂停 blur 收起，关闭选择器后恢复并聚焦 Sidepad。
   - 增加文件渲染版本令牌，旧异步任务不再覆盖当前标签；PPTX 首次渲染完成后缓存 HTML，后续切回即时恢复。
   - E2E 捕获并修复隐藏 WebView 未 `dom-ready` 时调用 `getURL()` 抛错的问题；该异常此前会直接中断标签切换。
@@ -278,3 +299,22 @@
   - `npm test`、`npm audit` 和 Windows x64 构建通过；生产依赖 0 个已知漏洞。
   - 安装包内 `Sidepad.exe` 确认为 PE32+ x86-64，安装版和便携版均生成 SHA-256。
   - PR #7 已合入 main；v0.2.1 安装版、便携版和校验文件准备发布。
+
+### Phase 17: 新网页内容自动适配
+- **Status:** in_progress
+- Actions taken:
+  - 已确认宿主 WebView 边界正确，剩余问题来自新网站自身设置桌面最小宽度。
+  - 加入按 guest `scrollWidth / innerWidth` 计算的自动缩放；正常响应式页面保持 100%，最低缩放限制为 45%。
+  - 每次新导航重置缩放，并在加载完成后的 0/350/1200ms 复测，以覆盖延迟渲染页面。
+  - 完整 `npm test` 通过；1100px 固定宽网页在 559px WebView 中自动缩放后不再横向溢出。
+  - 用户反馈整体缩放导致文字偏小且右侧仍有少量裁切；策略改为先注入窄栏重排并保持 100% 字号，只有重排无效时才缩放，兜底缩放增加 3% 安全边距。
+  - 调整后的完整 `npm test` 通过；1100px 固定宽测试页在 100% 缩放下完成窄栏重排并完整显示。
+
+### Phase 19: 发布 v0.2.2
+- **Status:** in_progress
+- Actions taken:
+  - 将新网页窄栏重排、延迟复测和安全缩放兜底整理为 v0.2.2。
+  - 更新 README、发布说明和版本号，下载链接改为仓库相对地址。
+  - 增加灾难恢复文档及 Windows 用户数据备份、校验和恢复脚本。
+  - `npm test` 和 `npm audit` 通过，生产依赖 0 个已知漏洞。
+  - Windows x64 安装版与便携版构建成功，解包主程序确认为 PE32+ x86-64。
