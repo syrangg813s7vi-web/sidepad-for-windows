@@ -16,7 +16,7 @@
 | 共享接缝只显示 320×12px 短触发条 | `src/window-layout.js`：`hasDisplayOnRight()`、`calculateTriggerBounds()` | 左右排列双屏和小高度布局单元测试 |
 | 62px 内容轨道 | `src/renderer/styles.css`：compact mode `.app-shell` | 截图像素检查 |
 | 34px 品牌按钮、40px 添加按钮、44px 内容入口 | `src/renderer/styles.css` | 首页视觉回归 |
-| 胶囊搜索和快捷卡片首页 | `src/renderer/index.html`、`styles.css`、`app.js` | `sidepad-preview.png` |
+| 胶囊搜索和快捷卡片首页 | `src/renderer/index.html`、`styles.css`、`app.js` | README 核心功能演示 |
 | 网页 Chromium 持久会话 | `src/renderer/index.html`：`persist:sidepad` WebView | 登录后重启应用 |
 | 网页失败反馈与重试 | `src/renderer/app.js`：`did-fail-load`、`showWebError()` | E2E 持续断连后恢复服务并重试 |
 | 新窗口链接在当前网页打开 | `src/main.js`：`did-attach-webview`、`setWindowOpenHandler()` | E2E 执行 `window.open()` |
