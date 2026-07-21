@@ -4,13 +4,11 @@
 
 [下载最新版本](../../releases/latest) · [设计文档](docs/DESIGN.md) · [Windows x64 验收记录](docs/WINDOWS-VM-VALIDATION.md)
 
-![Sidepad 界面预览](sidepad-preview.png)
-
 ## 核心功能演示
 
-[![播放 Sidepad 核心功能演示](assets/sidepad-core-demo-cover.png)](assets/sidepad-core-demo.mp4)
+<video src="https://github.com/user-attachments/assets/855d08ba-0d7c-479e-a8a0-713edf00ca7e" controls width="100%"></video>
 
-点击封面观看 24 秒演示：边缘唤醒、常用网页、自动保存笔记、本地文档预览和失焦收起。
+直接播放 24 秒演示：边缘唤醒、常用网页、自动保存笔记、本地文档预览和失焦收起。
 
 ## 下载
 
