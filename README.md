@@ -6,6 +6,12 @@
 
 ![Sidepad 界面预览](sidepad-preview.png)
 
+## 核心功能演示
+
+[![播放 Sidepad 核心功能演示](assets/sidepad-core-demo-cover.png)](assets/sidepad-core-demo.mp4)
+
+点击封面观看 24 秒演示：边缘唤醒、常用网页、自动保存笔记、本地文档预览和失焦收起。
+
 ## 下载
 
 当前版本：`v0.2.3`，适用于 Windows 10/11 x64。
