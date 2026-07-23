@@ -255,6 +255,6 @@ Phase 27: 发布 v0.3.0 常驻终端
 - [x] 仅迁移终端功能、设计、测试和必要依赖
 - [x] 更新版本号、README 和 Release Notes
 - [x] 在发布分支执行完整测试、生产审计和 Windows x64 构建
-- [ ] 生成 SHA-256，提交 PR 并合入 `main`
-- [ ] 创建 GitHub Release 并验证附件
-- **Status:** in_progress
+- [x] 生成 SHA-256，提交 PR 并合入 `main`
+- [x] 创建 GitHub Release 并验证附件
+- **Status:** complete

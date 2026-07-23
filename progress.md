@@ -334,7 +334,7 @@
   - 既有 Windows 11 x64 VM 登录后黑屏，真实 ConPTY I/O 仍待可用 Windows 环境补验。
 
 ### Phase 27: 发布 v0.3.0
-- **Status:** in_progress
+- **Status:** complete
 - Actions taken:
   - 从最新 `origin/main` 创建隔离分支 `codex/v0.3.0-terminal`。
   - 排除原工作区未提交和无关内容，只迁移终端功能、设计、测试和依赖。
@@ -347,3 +347,5 @@
   - 恢复树注入 terminal item 后可能因 reload/blur 隐藏，macOS 会节流隐藏窗口的 requestAnimationFrame；E2E 现重新展开并 pin 后检查 PTY，匹配真实添加终端的可见路径。
   - 最终定位到渲染页 reload 时主进程仍保持展开状态、但新页面未收到当前状态；主进程现于 `did-finish-load` 重放 `panel-state`，发布树与干净恢复树 E2E 均通过。
   - 最终完整 `npm test`、完整依赖审计与 Windows x64 重建通过；解包主程序为 PE32+ x86-64。
+  - PR #16 已合入 `main`；正式 Release `v0.3.0` 已发布安装版、便携版和校验文件。
+  - GitHub 返回两个 EXE 附件状态均为 `uploaded`，服务端 SHA-256 与本地构建一致；校验文件名同步为 GitHub 实际下载文件名。
