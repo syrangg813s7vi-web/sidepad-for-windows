@@ -322,3 +322,28 @@
   - 官方 Electron 下载端点在恢复环境中连接失败；仓库声明可访问的 Electron 镜像，下载后继续使用包内官方校验表验证。
   - 从 GitHub 全新克隆发布分支后，`npm ci`、运行时预取和完整 `npm test` 恢复演练通过。
   - PR #9 和最终校验值 PR #10 已合入 `main`；正式 Release `v0.2.2` 已发布，三个附件状态与远端 SHA-256 均验证一致。
+
+### Phase 26: 常驻终端与 Code Agent 会话
+- **Status:** implementation_complete
+- Actions taken:
+  - 新增主进程 PTY 服务、受限 preload IPC 和 xterm renderer。
+  - 支持 PowerShell、CMD 与可信路径条件发现的 Git Bash。
+  - 终端切页/隐藏保持，停止、删除与退出执行清理。
+  - 5 项终端服务单测及 Electron 回归通过；生产依赖审计为 0。
+  - Windows x64 构建与原生文件架构检查通过；干净恢复演练通过。
+  - 既有 Windows 11 x64 VM 登录后黑屏，真实 ConPTY I/O 仍待可用 Windows 环境补验。
+
+### Phase 27: 发布 v0.3.0
+- **Status:** in_progress
+- Actions taken:
+  - 从最新 `origin/main` 创建隔离分支 `codex/v0.3.0-terminal`。
+  - 排除原工作区未提交和无关内容，只迁移终端功能、设计、测试和依赖。
+  - 版本升级为 0.3.0，README 与 Release Notes 已更新并保留 Windows 运行时验证边界。
+  - 完整依赖审计发现 electron-builder 开发链的 `fast-uri 3.1.3` 高危公告；锁定兼容修复版 3.1.4 后完整/生产审计均为 0。
+  - Windows x64 安装版与便携版构建成功，主程序及 PTY/ConPTY 原生文件均确认为 x86-64，xterm 与 terminal service 已进入 ASAR。
+  - 最终安装版 SHA-256：`53a0220643aa4a17a8a325d5a22fea7dd40fbbdb0ce461bc6df6ba2e56a60716`；便携版：`78c03f460f7ee04bd843f50a721b24ea2193b5488db1a97d0d32f63f170f5d3c`。
+  - 干净恢复 E2E 两次暴露 macOS 系统焦点抖动；交互锁定用例现于合成 mouseleave 后再次确认 pin，使测试最终状态与真实“仍在使用面板”一致。
+  - 发布树 E2E 日志确认 macOS GPU mailbox 异常后 CDP evaluate 超时；测试 Electron 改用软件渲染并将有限超时调整为 30 秒，生产启动参数不变。
+  - 恢复树注入 terminal item 后可能因 reload/blur 隐藏，macOS 会节流隐藏窗口的 requestAnimationFrame；E2E 现重新展开并 pin 后检查 PTY，匹配真实添加终端的可见路径。
+  - 最终定位到渲染页 reload 时主进程仍保持展开状态、但新页面未收到当前状态；主进程现于 `did-finish-load` 重放 `panel-state`，发布树与干净恢复树 E2E 均通过。
+  - 最终完整 `npm test`、完整依赖审计与 Windows x64 重建通过；解包主程序为 PE32+ x86-64。

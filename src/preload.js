@@ -13,5 +13,22 @@ contextBridge.exposeInMainWorld('sidepad', {
   openFile: (filePath) => ipcRenderer.invoke('open-file', filePath),
   revealFile: (filePath) => ipcRenderer.invoke('reveal-file', filePath),
   authorizeFile: (filePath) => ipcRenderer.invoke('authorize-file', filePath),
+  terminal: {
+    listShells: () => ipcRenderer.invoke('terminal-list-shells'),
+    create: (request) => ipcRenderer.invoke('terminal-create', request),
+    write: (id, data) => ipcRenderer.send('terminal-write', id, data),
+    resize: (id, cols, rows) => ipcRenderer.send('terminal-resize', id, cols, rows),
+    close: (id) => ipcRenderer.invoke('terminal-close', id),
+    onData: (callback) => {
+      const listener = (_, payload) => callback(payload);
+      ipcRenderer.on('terminal-data', listener);
+      return () => ipcRenderer.removeListener('terminal-data', listener);
+    },
+    onExit: (callback) => {
+      const listener = (_, payload) => callback(payload);
+      ipcRenderer.on('terminal-exit', listener);
+      return () => ipcRenderer.removeListener('terminal-exit', listener);
+    },
+  },
   onPanelState: (callback) => ipcRenderer.on('panel-state', (_, state) => callback(state)),
 });

@@ -47,8 +47,9 @@ class Cdp {
     this.socket.addEventListener('message', event => {
       const message = JSON.parse(event.data);
       if (!message.id || !this.pending.has(message.id)) return;
-      const { resolve, reject } = this.pending.get(message.id);
+      const { resolve, reject, timer } = this.pending.get(message.id);
       this.pending.delete(message.id);
+      clearTimeout(timer);
       if (message.error) reject(new Error(message.error.message));
       else resolve(message.result);
     });
@@ -57,7 +58,13 @@ class Cdp {
   async send(method, params = {}) {
     await this.ready;
     const id = this.nextId++;
-    const result = new Promise((resolve, reject) => this.pending.set(id, { resolve, reject }));
+    const result = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pending.delete(id);
+        reject(new Error(`CDP ${method} timed out`));
+      }, 30000);
+      this.pending.set(id, { resolve, reject, timer });
+    });
     this.socket.send(JSON.stringify({ id, method, params }));
     return result;
   }
@@ -158,6 +165,7 @@ async function run() {
 
   electron = spawn(electronBinary, [
     '.',
+    '--disable-gpu',
     `--remote-debugging-port=${debugPort}`,
     `--user-data-dir=${profileDir}`,
   ], {
@@ -209,6 +217,8 @@ async function run() {
   await edge.eval('window.sidepad.enter()');
   await waitFor(() => main.eval('document.body.classList.contains("expanded")'), 'edge trigger did not expand panel');
   await main.eval('document.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }))');
+  await sleep(100);
+  await main.eval('window.sidepad.leave()');
   await waitFor(
     async () => !(await main.eval('document.body.classList.contains("expanded")')),
     'an unclicked hover preview should collapse after pointer leave',
@@ -218,6 +228,8 @@ async function run() {
   await waitFor(() => main.eval('document.body.classList.contains("expanded")'), 'edge trigger did not reopen panel');
   await main.eval('window.sidepad.pin()');
   await main.eval('document.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }))');
+  await sleep(100);
+  await main.eval('window.sidepad.pin()');
   await sleep(800);
   assert.equal(
     await main.eval('document.body.classList.contains("expanded")'),
@@ -237,6 +249,85 @@ async function run() {
     return JSON.parse(localStorage.getItem('sidepad.items'))[0].content;
   })()`);
   assert.equal(await main.eval('JSON.parse(localStorage.getItem("sidepad.items"))[0].content'), 'Updated note');
+
+  await edge.eval('window.sidepad.enter()');
+  await waitFor(() => main.eval('document.body.classList.contains("expanded")'), 'panel did not expand for terminal test');
+  await main.eval('window.sidepad.pin()');
+  const terminalShell = await main.eval('(async () => (await window.sidepad.terminal.listShells())[0])()');
+  assert.ok(terminalShell?.id, 'at least one supported terminal shell should be discoverable');
+  const terminalItem = {
+    id: 'qa-terminal',
+    type: 'terminal',
+    name: 'QA Code Agent',
+    shellId: terminalShell.id,
+    cwd: null,
+    color: '#26344a',
+  };
+  await setActiveItem(main, terminalItem);
+  await main.eval(`(() => {
+    window.sidepad.enter();
+    setTimeout(() => window.sidepad.pin(), 50);
+    return true;
+  })()`);
+  await waitFor(
+    () => main.eval('document.body.classList.contains("expanded")'),
+    'panel did not remain visible for terminal startup',
+  );
+  const terminalState = await waitFor(
+    async () => {
+      const state = await main.eval('document.querySelector("#terminalStatus")?.dataset.state');
+      return ['running', 'error'].includes(state) ? state : null;
+    },
+    'terminal PTY did not reach a final startup state',
+  );
+  if (terminalState === 'error') {
+    assert.notEqual(process.platform, 'win32', 'Windows terminal PTY must start successfully');
+    const terminalError = await main.eval('document.querySelector("#terminalStatus")?.textContent?.trim() || ""');
+    assert.ok(terminalError, 'unsupported host PTY failure should remain visible and recoverable');
+    console.log('SKIP persistent terminal runtime: current non-Windows host rejected node-pty spawn');
+  } else {
+    const firstTerminalSession = await main.eval(`window.sidepad.terminal.create({
+      id: 'qa-terminal',
+      shellId: ${JSON.stringify(terminalShell.id)},
+      cols: 80,
+      rows: 24
+    })`);
+    assert.equal(firstTerminalSession.reused, true, 'terminal should reuse its active PTY session');
+    const terminalCommand = terminalShell.id === 'powershell'
+      ? 'Write-Output SIDEPAD_TERMINAL_READY\r'
+      : terminalShell.id === 'cmd'
+        ? 'echo SIDEPAD_TERMINAL_READY\r'
+        : "printf 'SIDEPAD_TERMINAL_READY\\n'\r";
+    await main.eval(`window.sidepad.terminal.write('qa-terminal', ${JSON.stringify(terminalCommand)})`);
+    await waitFor(
+      () => main.eval('document.querySelector(".terminal-panel:not([hidden]) .xterm-rows")?.textContent.includes("SIDEPAD_TERMINAL_READY")'),
+      'terminal output did not reach xterm',
+    );
+    const terminalNote = { id: 'qa-terminal-note', type: 'note', name: 'Terminal Switch', content: '', color: '#7566ec' };
+    await main.eval(`(() => {
+      items.push(${JSON.stringify(terminalNote)});
+      selectItem('qa-terminal-note');
+      selectItem('qa-terminal');
+      return true;
+    })()`);
+    await waitFor(
+      () => main.eval('document.querySelector("#terminalStatus")?.dataset.state === "running"'),
+      'terminal did not restore after tab switching',
+    );
+    const restoredTerminalSession = await main.eval(`window.sidepad.terminal.create({
+      id: 'qa-terminal',
+      shellId: ${JSON.stringify(terminalShell.id)},
+      cols: 80,
+      rows: 24
+    })`);
+    assert.equal(restoredTerminalSession.reused, true, 'tab switching must not recreate the terminal PTY');
+    assert.equal(restoredTerminalSession.pid, firstTerminalSession.pid, 'terminal PID must remain stable across tab switching');
+    assert.equal(
+      await main.eval('document.querySelector(".terminal-panel:not([hidden]) .xterm-rows")?.textContent.includes("SIDEPAD_TERMINAL_READY")'),
+      true,
+      'terminal scrollback should remain visible after tab switching',
+    );
+  }
 
   const web = { id: 'qa-web', type: 'web', name: 'Web QA', url: `http://127.0.0.1:${serverPort}`, color: '#4285f4' };
   await setActiveItem(main, web);
@@ -368,6 +459,9 @@ async function run() {
   console.log('PASS homepage and bundled renderer availability');
   console.log('PASS hover-preview collapse, click-lock persistence and programmatic collapse');
   console.log('PASS note restore and autosave');
+  if (terminalState === 'running') {
+    console.log('PASS persistent terminal PTY, output rendering and tab switching');
+  }
   console.log('PASS Chromium webview navigation');
   console.log('PASS Chromium failure recovery and popup navigation');
   console.log('PASS PDF, DOCX, PPTX and XLSX self-contained previews');

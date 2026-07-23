@@ -68,3 +68,16 @@ Electron 的 `screen.workArea` 使用 DIP（设备无关像素）。窗口宽度
 几何已提取到 `src/window-layout.js`，并用单元测试覆盖 100% 与 150%
 缩放：1920 个物理像素在 150% 缩放下对应 1280 DIP，面板保持 538 DIP，
 即约 807 个物理像素。
+
+## 常驻终端开发版验证边界（2026-07-23）
+
+- Windows x64 NSIS 与便携版交叉构建成功，主程序为 PE32+ x86-64。
+- `pty.node`、`conpty.node`、`conpty_console_list.node`、winpty/ConPTY DLL
+  与辅助 EXE 均随包放在 `app.asar.unpacked`，架构为 x86-64。
+- 生产依赖审计为 0 个已知漏洞。
+- 既有 Windows 11 来宾以 8 vCPU 停在 UEFI；改用 2 vCPU 后可登录，但随后
+  复现历史测试报告中的黑屏，QEMU Guest Agent 未上线，无法启动本次新构建。
+
+因此本轮确认了构建、自包含文件和架构，但没有确认 PowerShell/CMD 的真实
+ConPTY 输入输出。发布包含终端功能的版本前，必须在可用的 Windows 10/11
+x64 环境补做命令输入输出、切页 PID 保持、删除会话和退出清理验收。

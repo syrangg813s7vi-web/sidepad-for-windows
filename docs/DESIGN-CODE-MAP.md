@@ -7,7 +7,7 @@
 | 面板最大宽度 680px、最小 520px、显示器宽度约 42% | `src/window-layout.js`：`calculatePanelBounds()` | `tests/window-layout.test.js` 的分辨率与 150% DPI 测试 |
 | 展开/收起动画 180ms | `src/main.js`：`ANIMATION_MS`、`animateTo()` | 录屏或计时检查 |
 | 悬停预览不抢焦点，未点击离开后收起 | `src/main.js`：`expandPanel({ focus: false })`、`panel-leave`；`src/renderer/app.js`：全局进入/离开事件 | E2E 未交互离开后自动收起 |
-| 点击后锁定，鼠标离开保持展开 | `src/main.js`：`isInteractionLocked`、窗口 `focus`、`panel-pin` | E2E pointerdown 后移出并等待 800ms 仍展开 |
+| 点击后锁定，鼠标离开保持展开 | `src/main.js`：`isInteractionLocked`、`panel-pin`；窗口 `focus` 只维持既有锁定，不提升预览态 | E2E pointerdown 后移出并等待 800ms 仍展开 |
 | 失焦 480ms 收起并解锁 | `src/main.js`：`mainWindow.on('blur')`、`scheduleCollapse()` | 点击并切换到其他窗口 |
 | 关闭按钮退出全部窗口和进程 | `src/main.js`：`quitApplication()`、`destroyTriggerWindows()` | E2E 点击关闭后等待 Electron 子进程退出 |
 | 触发条宽 12px | `src/window-layout.js`：`calculateTriggerBounds()` | 布局单元测试 |
@@ -28,6 +28,11 @@
 | 笔记自动保存 | `src/renderer/app.js`：`noteEditor` input 事件 | 输入后重启应用 |
 | PDF/图片/文本内嵌预览 | `src/main.js` 文件描述、`app.js`：`showFile()` | 添加样例文件 |
 | PPTX/DOCX/XLSX 自包含预览 | `index.html` 内置脚本、`app.js`：`showFile()` | 无 Office 环境打开样例 |
+| 终端 shell 发现与白名单 | `src/terminal-service.js`：`discoverShells()`、`getShell()` | `tests/terminal-service.test.js`：PowerShell/CMD 必有、Git Bash 条件发现 |
+| PTY 会话常驻与生命周期 | `src/terminal-service.js`：`create/write/resize/close/closeAll`；`src/main.js` terminal IPC 与退出清理 | terminal service 生命周期单测；Windows E2E 验证切页/隐藏保持及退出清理 |
+| 终端隔离桥接 | `src/main.js`：`isTrustedMainRenderer()` 与 terminal IPC；`src/preload.js`：`sidepad.terminal` | session ID、输入/尺寸边界单测；远程 WebView 无 terminal bridge |
+| xterm.js 终端视图 | `src/renderer/terminal.js`、`index.html`、`styles.css` | Electron E2E 验证启动状态、输出、PID/scrollback 保持；非 Windows 宿主验证可恢复降级 |
+| Windows x64 原生 PTY 自包含打包 | `package.json`：`node-pty`、`npmRebuild: false`、`asarUnpack` | 构建后检查 `app.asar.unpacked` 的 `.node`/DLL/EXE 均为 PE32+ x86-64 |
 | PPTX 使用完整内容区连续展示多页 | `src/renderer/app.js`：`renderPptx()`；`styles.css`：`.pptx-stage` | 三页 PPTX E2E 检查页数、宽度、滚动高度与无横向裁切 |
 | PPTX 标签切换即时恢复 | `src/renderer/app.js`：`pptxHtmlCache`、`fileRenderVersion` | E2E 首次渲染后切到笔记再切回，立即恢复 3 页缓存 |
 | 系统文件选择期间不隐藏 | `src/main.js`：`isFileDialogOpen`、`pick-files` | 选择或取消文件后 Sidepad 恢复并聚焦 |

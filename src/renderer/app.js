@@ -4,6 +4,10 @@ if (!window.sidepad) {
     enter() {}, pin() {}, leave() {}, collapse() {}, close() {},
     openExternal() {}, pickFiles: async () => [], openFile() {}, revealFile() {},
     importFiles: async () => [], pathForFile: () => '', authorizeFile: async () => false, onPanelState() {},
+    terminal: {
+      listShells: async () => [], create: async () => ({ ok: false }), write() {}, resize() {},
+      close: async () => false, onData() { return () => {}; }, onExit() { return () => {}; },
+    },
   };
 }
 const els = Object.fromEntries([
@@ -13,6 +17,8 @@ const els = Object.fromEntries([
   'modalClose','cancelButton','siteForm','siteName','siteUrl','formError','documentView','noteShell',
   'noteEditor','noteCount','filePreview','homeSearch','homeSearchInput','homeGrid',
   'webError','webErrorTitle','webErrorDetail','webRetryButton','webErrorExternal',
+  'terminalView','terminalPanels','terminalStatus','terminalClearButton','terminalRestartButton',
+  'terminalStopButton','terminalForm','terminalShell','terminalName','terminalFormError','terminalCancelButton',
 ].map(id => [id, $(`#${id}`)]));
 
 const defaults = [
@@ -34,6 +40,7 @@ let fileRenderVersion = 0;
 const pptxHtmlCache = new Map();
 let webFitVersion = 0;
 let webFitTimers = [];
+let availableShells = [];
 
 function loadItems() {
   try {
@@ -67,8 +74,8 @@ function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, c => 
 function iconMarkup(item, header = false) {
   const cls = header ? '' : 'favicon';
   if (item.type === 'web') return `<span class="${cls}" style="background:${item.color || '#2d3240'}"><img src="${faviconUrl(item.url)}" alt="" onerror="this.remove();this.parentElement.textContent='${escapeHtml(item.name[0]?.toUpperCase() || 'W')}'"></span>`;
-  const label = item.type === 'note' ? 'TXT' : (item.ext || 'FILE').toUpperCase().slice(0, 4);
-  const color = item.type === 'note' ? '#7566ec' : ['ppt','pptx'].includes(item.ext) ? '#d85234' : '#3f4657';
+  const label = item.type === 'terminal' ? '>_' : item.type === 'note' ? 'TXT' : (item.ext || 'FILE').toUpperCase().slice(0, 4);
+  const color = item.type === 'terminal' ? '#26344a' : item.type === 'note' ? '#7566ec' : ['ppt','pptx'].includes(item.ext) ? '#d85234' : '#3f4657';
   return `<span class="${cls}" style="background:${color}">${label}</span>`;
 }
 
@@ -97,7 +104,10 @@ function showOnly(kind) {
   els.documentView.hidden = !['note','file'].includes(kind);
   els.noteShell.hidden = kind !== 'note';
   els.filePreview.hidden = kind !== 'file';
+  els.terminalView.hidden = kind !== 'terminal';
+  if (kind !== 'terminal') window.sidepadTerminal?.hide();
   document.querySelector('.browserbar').style.display = kind === 'web' ? 'flex' : 'none';
+  els.openExternal.hidden = kind !== 'web';
   document.querySelector('.workspace').classList.toggle('document-mode', kind !== 'web');
   document.querySelector('.workspace').classList.toggle('home-mode', kind === 'welcome');
   if (kind !== 'web') els.loading.classList.remove('visible');
@@ -113,7 +123,13 @@ function selectItem(id) {
   saveItems();
   renderItems();
   els.pageTitle.textContent = item.name;
-  els.pageHost.textContent = item.type === 'web' ? hostOf(item.url) : item.type === 'note' ? '本地笔记 · 自动保存' : `${item.ext.toUpperCase()} · 本地文件`;
+  els.pageHost.textContent = item.type === 'web'
+    ? hostOf(item.url)
+    : item.type === 'note'
+      ? '本地笔记 · 自动保存'
+      : item.type === 'terminal'
+        ? '本地终端 · 会话常驻'
+        : `${(item.ext || 'FILE').toUpperCase()} · 本地文件`;
   els.currentFavicon.innerHTML = iconMarkup(item, true);
   if (item.type === 'web') navigate(item.url);
   if (item.type === 'note') {
@@ -123,6 +139,10 @@ function selectItem(id) {
     setTimeout(() => els.noteEditor.focus(), 0);
   }
   if (item.type === 'file') showFile(item, renderVersion);
+  if (item.type === 'terminal') {
+    showOnly('terminal');
+    window.sidepadTerminal?.show(item);
+  }
 }
 
 function navigate(url) {
@@ -358,16 +378,35 @@ function openModal(prefill = {}) {
   setContentType('web');
   setTimeout(() => (prefill.name ? els.siteUrl : els.siteName).focus(), 20);
 }
-function closeModal() { els.modalBackdrop.hidden = true; els.siteForm.reset(); }
+function closeModal() {
+  els.modalBackdrop.hidden = true;
+  els.siteForm.reset();
+  els.terminalForm.reset();
+  els.terminalFormError.textContent = '';
+}
 
-function setContentType(type) {
+async function setContentType(type) {
   document.querySelectorAll('.content-type').forEach(button => button.classList.toggle('active', button.dataset.type === type));
   els.siteForm.hidden = type !== 'web';
+  els.terminalForm.hidden = type !== 'terminal';
   if (type === 'note') {
     const item = { id: crypto.randomUUID(), type: 'note', name: `新笔记 ${items.filter(i => i.type === 'note').length + 1}`, content: '', color: '#7566ec' };
     items.push(item); activeId = item.id; saveItems(); closeModal(); selectItem(item.id);
   }
   if (type === 'file') { closeModal(); addFiles(); }
+  if (type === 'terminal') {
+    els.terminalFormError.textContent = '';
+    availableShells = await window.sidepad.terminal.listShells();
+    els.terminalShell.innerHTML = availableShells.map(shell => (
+      `<option value="${escapeHtml(shell.id)}">${escapeHtml(shell.name)}</option>`
+    )).join('');
+    if (!availableShells.length) {
+      els.terminalFormError.textContent = '没有找到可用终端，请重新安装 Sidepad。';
+      return;
+    }
+    els.terminalName.value = availableShells[0].name;
+    setTimeout(() => els.terminalName.select(), 0);
+  }
 }
 
 async function addFiles() {
@@ -400,10 +439,12 @@ document.addEventListener('drop', async event => {
 });
 window.sidepad.onPanelState(({ expanded }) => document.body.classList.toggle('expanded', expanded));
 
-els.siteList.addEventListener('click', event => {
+els.siteList.addEventListener('click', async event => {
   const removeId = event.target.dataset.remove;
   if (removeId) {
     event.stopPropagation();
+    const removedItem = items.find(item => item.id === removeId);
+    if (removedItem?.type === 'terminal') await window.sidepadTerminal?.remove(removeId);
     items = items.filter(item => item.id !== removeId);
     if (activeId === removeId) activeId = items[0]?.id || null;
     saveItems(); renderItems();
@@ -427,6 +468,7 @@ els.homeSearch.addEventListener('submit', event => {
 document.querySelectorAll('.content-type').forEach(button => button.addEventListener('click', () => setContentType(button.dataset.type)));
 els.modalClose.addEventListener('click', closeModal);
 els.cancelButton.addEventListener('click', closeModal);
+els.terminalCancelButton.addEventListener('click', closeModal);
 els.modalBackdrop.addEventListener('click', event => { if (event.target === els.modalBackdrop) closeModal(); });
 els.manageButton.addEventListener('click', () => { manageMode = !manageMode; els.manageButton.querySelector('span').textContent = manageMode ? '完成管理' : '管理内容'; renderItems(); });
 els.collapseButton.addEventListener('click', () => window.sidepad.collapse());
@@ -439,6 +481,29 @@ els.siteForm.addEventListener('submit', event => {
   if (!url || !name) { els.formError.textContent = '请填写有效的名称和网页地址。'; return; }
   const item = { id: crypto.randomUUID(), type: 'web', name, url, color: '#343948' };
   items.push(item); activeId = item.id; saveItems(); renderItems(); closeModal(); selectItem(item.id);
+});
+els.terminalForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const shell = availableShells.find(entry => entry.id === els.terminalShell.value);
+  const name = els.terminalName.value.trim();
+  if (!shell || !name) {
+    els.terminalFormError.textContent = '请选择终端并填写名称。';
+    return;
+  }
+  const item = {
+    id: crypto.randomUUID(),
+    type: 'terminal',
+    name,
+    shellId: shell.id,
+    cwd: null,
+    color: '#26344a',
+  };
+  items.push(item);
+  activeId = item.id;
+  saveItems();
+  renderItems();
+  closeModal();
+  selectItem(item.id);
 });
 
 els.noteEditor.addEventListener('input', () => {
@@ -480,6 +545,16 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape') { if (!els.modalBackdrop.hidden) closeModal(); else window.sidepad.collapse(); }
   if (event.ctrlKey && event.key.toLowerCase() === 'l') { event.preventDefault(); els.addressInput.select(); }
   if (event.ctrlKey && event.key.toLowerCase() === 'r' && items.find(i => i.id === activeId)?.type === 'web') { event.preventDefault(); els.webview.reload(); }
+});
+
+window.sidepadTerminal?.initialize({
+  api: window.sidepad.terminal,
+  root: els.terminalView,
+  panels: els.terminalPanels,
+  status: els.terminalStatus,
+  clearButton: els.terminalClearButton,
+  restartButton: els.terminalRestartButton,
+  stopButton: els.terminalStopButton,
 });
 
 renderItems();
