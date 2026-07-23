@@ -99,6 +99,11 @@
 - Issue #4、#5、#3 已按依赖顺序实现：主进程只选择 Windows 主屏；触发区改为全高或共享接缝 320×12px；PPTX 使用完整可读区域和连续多页 list 布局。
 
 ## Visual/Browser Findings
+- renderer terminal view → preload terminal contract → main-process terminal service → Windows ConPTY 保持单向依赖。
+- PTY 句柄和 PID 不写入 localStorage；terminal item 只持久化 shell ID 与显示元数据。
+- node-pty 1.1.0 包含 win32-x64 PTY/ConPTY 预构建；Electron 打包必须禁用源码交叉重建并将原生文件解包到 `app.asar.unpacked`。
+- 生产依赖审计与完整依赖审计必须分开报告；发布包只纳入生产依赖。
+- 既有 Windows VM 黑屏意味着真实 ConPTY 运行时结论仍未成立，Release Notes 必须保留这一验证边界。
 - 2026-07-16 本地 1280×820 首次截图显示：侧栏和顶栏视觉正常，但隐藏浏览器地址栏时，工作区仍保留固定网格行，欢迎页被压缩。
 - 已增加 `.workspace.document-mode`，让笔记、文件和欢迎页使用“顶栏 + 自适应内容”两行布局。
 - 官方 Slidepad 截图显示展开界面为暖色半透明模糊背景，左侧约 55px 的极窄轨道仅放置箭头、状态点、省略号与底部加号。

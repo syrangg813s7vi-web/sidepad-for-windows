@@ -88,7 +88,7 @@ Sidepad
 预览态（不抢焦点）
   ├─ 鼠标停留：保持
   ├─ 鼠标离开：延迟收起
-  └─ 点击面板 / 面板获得焦点
+  └─ 点击面板
              ↓
 交互锁定态
   ├─ 鼠标离开：保持展开
@@ -115,7 +115,7 @@ Sidepad
 - 面板从右向左使用 ease-out 动画展开。
 - 面板始终在 Windows 主显示器右侧展开。
 - 悬停唤醒使用 `showInactive`，不主动抢走当前应用焦点。
-- 用户点击面板或面板实际获得焦点后进入交互锁定态；此后保持置顶，切换焦点后自动收起并解锁。
+- 用户实际点击面板后进入交互锁定态；操作系统偶发的 focus 事件不得把未点击的悬停预览升级为锁定态。锁定后切换焦点会自动收起并解锁。
 - 右上角关闭按钮表示退出应用：必须同时销毁主窗口和所有边缘触发窗口，并结束进程，不允许留下不可唤醒的后台窗口。
 
 ## 6. 双屏和多屏规则
@@ -205,7 +205,7 @@ Sidepad
 ```js
 {
   id: "UUID",
-  type: "web | note | file",
+  type: "web | note | file | terminal",
   name: "显示名称",
   url: "网页地址",
   content: "笔记或小型文本文件内容",
@@ -217,12 +217,29 @@ Sidepad
 }
 ```
 
+终端 item 只持久化可恢复的描述信息：
+
+```js
+{
+  id: "UUID",
+  type: "terminal",
+  name: "PowerShell",
+  shellId: "powershell",
+  cwd: null,
+  color: "#26344a"
+}
+```
+
 ### 持久化规则
 
 - 内容列表、激活项和笔记内容保存在本地。
 - 网页登录数据保存在 Electron 持久分区。
 - 本地文件只保存路径，不复制、不上传、不修改。
 - 文件丢失或移动后，界面显示“找不到文件”，用户可从列表移除。
+- PTY 句柄、PID、输出缓冲区、环境变量和登录凭据不写入 LocalStorage。
+- 应用进程存活期间，terminal item ID 同时作为主进程 session ID；切换标签或隐藏面板不销毁 session。
+- 重启 Sidepad 后 terminal item 保留，但不会静默复活旧进程；进入该 item 时创建新会话并显示重启状态。
+- 删除 terminal item、显式结束或退出应用时终止对应进程树。
 
 ## 10. 技术架构
 
@@ -233,12 +250,14 @@ Electron 主进程
 ├── 屏幕与窗口状态管理
 ├── 本地文件对话框
 ├── 受控文件协议 sidepad-local://
+├── 终端 shell 发现与 PTY session 服务
 └── 外部应用调用
 
 Preload 隔离桥
 ├── 面板展开/收起
 ├── 文件选择与导入
 ├── 文件授权
+├── 受限终端 create/write/resize/close 与事件订阅
 └── 外部浏览器/文件夹操作
 
 Renderer
@@ -246,8 +265,28 @@ Renderer
 ├── 内容列表与首页
 ├── 文本编辑器
 ├── Office/PDF/图片预览
+├── xterm.js 终端视图
 └── LocalStorage 持久化
 ```
+
+终端依赖方向固定为 renderer terminal view → preload terminal contract → main-process terminal service → Windows ConPTY。终端服务不得依赖 DOM、item 渲染或网页容器；renderer 不得直接导入 PTY、`child_process` 或文件系统模块。
+
+### 10.1 Shell 发现契约
+
+- `powershell`：Windows PowerShell，使用 `powershell.exe -NoLogo`，作为 Windows 10/11 开箱即用基线。
+- `cmd`：使用 `%ComSpec%` 或系统目录中的 `cmd.exe`。
+- `git-bash`：只检测可信的 Git for Windows 常见安装路径或仓库外显式配置；找不到时不出现在可选列表。
+- Shell ID 来自主进程固定白名单。renderer 不得提交任意可执行文件或任意启动参数。
+- 初始目录默认用户目录；未来允许选择目录时，只接受系统目录选择器授权的路径。
+
+### 10.2 PTY 生命周期契约
+
+- `create(sessionId, shellId, cols, rows)` 幂等；已有活动 session 时返回现状，不重复创建。
+- 主进程限制 session 数、输入块大小、cols/rows 范围，并验证 IPC sender 是 Sidepad 主 renderer。
+- PTY 输出只发送给主窗口；主窗口销毁后结束全部 session。
+- terminal item 不可见、标签切换或面板隐藏时 PTY 继续运行，不无限累计主进程输出。
+- 子进程退出后保留 terminal item，显示退出码和重新启动操作。
+- 删除 terminal item、显式停止和应用退出时终止 PTY 并清理事件订阅。
 
 ## 11. 安全设计
 
@@ -260,6 +299,10 @@ Renderer
 - 网页新窗口默认在当前网页视图继续打开；用户可通过顶栏按钮主动交给系统浏览器。
 - Electron 使用已修复已知安全公告的版本。
 - Office 解析依赖通过 npm 审计，当前为 0 个已知漏洞。
+- 终端 IPC 仅接受固定 shell ID、格式受限的 session ID、受限输入长度和合法尺寸，并验证 sender。
+- 远程 webview 不能访问终端桥；终端能力只暴露给本地隔离 renderer。
+- 不把 Code Agent token、Cookie、SSH key 或 shell 历史复制到 Sidepad 数据模型、日志、Linear 或 Git。
+- 不提供任意“启动程序”IPC；Git Bash 只能使用主进程可信发现结果。
 
 ## 12. 自包含安装
 
@@ -269,6 +312,7 @@ Windows 安装包包含：
 - Chromium
 - 应用 HTML/CSS/JavaScript
 - PPTX、DOCX、XLSX 解析组件
+- xterm.js 终端 renderer 和 Windows x64 ConPTY 桥接运行时
 - NSIS 安装程序
 
 用户不需要额外安装：
@@ -278,6 +322,10 @@ Windows 安装包包含：
 - LibreOffice
 - Node.js
 - Java 或 Python
+
+PowerShell 与 CMD 使用 Windows 自带 shell。Git Bash 与 Codex、Claude Code 等第三方 CLI 是可选外部工具：Sidepad 可以承载它们，但不捆绑其程序、账号或凭据。
+
+原生 PTY 模块及辅助二进制必须作为 `app.asar.unpacked` 发布内容，并在 Windows x64 构建中验证实际架构。正式依赖必须锁定到带 win32-x64 预构建的版本；若最终用户需要安装 Visual Studio、Python、Git 或 Node.js 才能启动 PowerShell/CMD，则不满足自包含验收。
 
 构建产物包括 NSIS 安装版和 portable 便携版；CPU 架构由构建任务决定：
 
@@ -338,6 +386,12 @@ Windows 安装包包含：
 - 外侧边缘使用全高 12px 触发区；共享接缝使用居中 320×12px 触发区，普通跨屏动作不应频繁误触。
 - 未点击的悬停预览在鼠标离开后能可靠隐藏；点击进入交互态后鼠标离开保持展开，点击其他窗口造成失焦后可靠隐藏。
 - 点击关闭按钮后主窗口、边缘触发窗口和应用进程均退出。
+- 可新建 PowerShell 和 CMD terminal item；已安装 Git Bash 时可选，未安装时不显示错误选项。
+- 终端可输入命令并实时显示 ANSI 输出，容器变化后 PTY cols/rows 同步更新。
+- 切换网页/文档、收起或自动隐藏后终端进程继续运行，返回时能看到连续输出。
+- 删除终端、显式停止或退出 Sidepad 后，对应 PTY 与子进程树结束。
+- 重启 Sidepad 后旧 terminal item 不导致启动崩溃，并可创建新会话。
+- 终端功能在 Windows 10 1809+ / Windows 11 x64 安装版和便携版中不依赖外部 Node.js、Python 或构建工具。
 - 网页登录会话可持久保存。
 - 笔记输入可自动保存。
 - PDF、图片、PPTX、DOCX、XLSX 能在无 Office 环境中打开。

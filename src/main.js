@@ -9,6 +9,12 @@ const {
   hasDisplayOnRight,
   selectPrimaryDisplay,
 } = require('./window-layout');
+const { TerminalService } = require('./terminal-service');
+
+let ptyRuntime = null;
+try {
+  ptyRuntime = require('node-pty');
+} catch {}
 
 const ANIMATION_MS = 180;
 const PREVIEW_LEAVE_DELAY_MS = 260;
@@ -22,6 +28,12 @@ let animationFrame;
 let isFileDialogOpen = false;
 const triggerWindows = new Map();
 const allowedFiles = new Set();
+const terminalService = new TerminalService({
+  pty: ptyRuntime,
+  send: (channel, payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload);
+  },
+});
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -136,6 +148,7 @@ function quitApplication() {
   }
   isExpanded = false;
   isInteractionLocked = false;
+  terminalService.closeAll();
   destroyTriggerWindows();
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy();
   app.quit();
@@ -168,15 +181,18 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('panel-state', { expanded: isExpanded });
+  });
   mainWindow.on('focus', () => {
-    if (!isExpanded) return;
+    if (!isExpanded || !isInteractionLocked) return;
     clearTimeout(collapseTimer);
-    isInteractionLocked = true;
   });
   mainWindow.on('blur', () => {
     if (!isFileDialogOpen) scheduleCollapse();
   });
   mainWindow.on('closed', () => {
+    terminalService.closeAll();
     mainWindow = null;
     isExpanded = false;
     isInteractionLocked = false;
@@ -232,6 +248,14 @@ function rebuildTriggerWindows() {
   const displays = screen.getAllDisplays();
   const primaryDisplay = getPrimaryDisplay();
   createTriggerWindow(primaryDisplay, hasDisplayOnRight(primaryDisplay, displays));
+}
+
+function isTrustedMainRenderer(event) {
+  return Boolean(
+    mainWindow
+    && !mainWindow.isDestroyed()
+    && event.sender === mainWindow.webContents,
+  );
 }
 
 ipcMain.on('panel-enter', () => expandPanel({ focus: false }));
@@ -292,6 +316,22 @@ ipcMain.handle('authorize-file', async (_, filePath) => {
     return true;
   } catch { return false; }
 });
+ipcMain.handle('terminal-list-shells', event => (
+  isTrustedMainRenderer(event) ? terminalService.listShells() : []
+));
+ipcMain.handle('terminal-create', (event, request) => {
+  if (!isTrustedMainRenderer(event)) return { ok: false, error: '不允许的终端请求。' };
+  return terminalService.create(request);
+});
+ipcMain.on('terminal-write', (event, id, data) => {
+  if (isTrustedMainRenderer(event)) terminalService.write(id, data);
+});
+ipcMain.on('terminal-resize', (event, id, cols, rows) => {
+  if (isTrustedMainRenderer(event)) terminalService.resize(id, cols, rows);
+});
+ipcMain.handle('terminal-close', (event, id) => (
+  isTrustedMainRenderer(event) ? terminalService.close(id) : false
+));
 
 app.whenReady().then(() => {
   protocol.handle('sidepad-local', (request) => {
@@ -312,6 +352,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => app.quit());
+app.on('before-quit', () => terminalService.closeAll());
 app.on('second-instance', () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   expandPanel({ focus: true });

@@ -1,23 +1,27 @@
 {
   "name": "sidepad-for-windows",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "A self-contained, primary-screen, auto-hiding content side panel for Windows.",
   "main": "src/main.js",
   "author": "Sidepad",
   "license": "MIT",
   "dependencies": {
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
     "docx-preview": "^0.4.0",
     "exceljs": "^4.4.0",
+    "node-pty": "1.1.0",
     "pptx-preview": "^1.0.7"
   },
   "scripts": {
     "postinstall": "install-electron --no",
     "start": "electron .",
     "dev": "electron . --dev",
-    "check": "node --check src/main.js && node --check src/window-layout.js && node --check src/preload.js && node --check src/renderer/app.js",
+    "check": "node --check src/main.js && node --check src/window-layout.js && node --check src/terminal-service.js && node --check src/preload.js && node --check src/renderer/terminal.js && node --check src/renderer/app.js",
     "test:layout": "node --test tests/window-layout.test.js",
+    "test:terminal": "node --test tests/terminal-service.test.js",
     "test:e2e": "node tests/electron-e2e.js",
-    "test": "npm run check && npm run test:layout && npm run test:e2e",
+    "test": "npm run check && npm run test:layout && npm run test:terminal && npm run test:e2e",
     "dist": "npm run dist:win:x64",
     "dist:win:x64": "electron-builder --win nsis portable --x64",
     "dist:win:arm64": "electron-builder --win nsis portable --arm64"
@@ -29,12 +33,17 @@
   },
   "overrides": {
     "echarts": "^6.1.0",
+    "fast-uri": "3.1.4",
     "uuid": "^11.1.1"
   },
   "build": {
     "appId": "com.sidepad.windows",
     "productName": "Sidepad",
     "asar": true,
+    "npmRebuild": false,
+    "asarUnpack": [
+      "node_modules/node-pty/prebuilds/**/*"
+    ],
     "files": [
       "src/**/*",
       "package.json"

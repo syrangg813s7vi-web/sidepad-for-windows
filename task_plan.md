@@ -4,7 +4,7 @@
 交付一个可运行、可打包并发布到 GitHub 的自包含 Windows Sidepad：贴边自动隐藏，可承载 Chromium 网页、文本、图片、PDF 与 PPTX/Office 内容，安装后不依赖外部组件。
 
 ## Current Phase
-Phase 19: 发布 v0.2.2
+Phase 27: 发布 v0.3.0 常驻终端
 
 ## Phases
 
@@ -162,6 +162,9 @@ Phase 19: 发布 v0.2.2
 | 多类型统一 item 数据模型 | 网页、笔记和文件可共享排序、激活、删除和持久化流程 |
 | Office 解析库随 Electron 打包 | 满足安装一次即可使用，不依赖 Office/Chrome/LibreOffice |
 | PPTX 作为内嵌演示格式 | OOXML 可由 JavaScript 解析；旧 `.ppt` 二进制格式只做降级处理 |
+| 主进程 PTY + xterm.js renderer | 保持进程权限与 DOM 分层，切页/隐藏不终止 Code Agent 会话 |
+| PowerShell/CMD 内置发现，Git Bash 可选 | 保证 Windows 开箱即用，同时不把 Git 或第三方 Agent 变成安装依赖 |
+| node-pty 1.1.0 + xterm 6.0.0 | 官方包包含 win32-x64 预构建，可作为 `app.asar.unpacked` 自包含交付 |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |
@@ -178,6 +181,12 @@ Phase 19: 发布 v0.2.2
 | E2E 首次在页面脚本初始化前读取首页 | 1 | 等待 DOM complete 和快捷卡片渲染完成 |
 | Office 预览通过自定义协议 fetch 失败 | 1 | 为白名单 `sidepad-local` 协议启用 CORS fetch 支持 |
 | DOCX 浏览器渲染器缺少 JSZip 全局依赖 | 1 | 在 docx-preview 之前加载已打包的 JSZip 浏览器版本 |
+| macOS 交叉构建时 electron-rebuild 尝试 node-gyp 源码编译 | 1 | 设置 `npmRebuild: false`，使用已核验的 win32-x64 N-API/ConPTY 预构建 |
+| 既有 Windows x64 VM 登录后黑屏且 Guest Agent 不上线 | 1 | 发布说明保留明确验证边界，不将构建/架构检查误报为 Windows 运行时通过 |
+| 干净恢复 E2E 的系统焦点抖动导致交互锁定断言不稳定 | 2 | 合成 mouseleave 后再次确认 pin，表达“指针已离开但面板仍处于交互焦点”的最终状态 |
+| macOS Electron GPU mailbox 异常后 CDP evaluate 超过 15 秒 | 1 | E2E 使用软件渲染，并保留 30 秒有限超时，避免 GPU 抖动与无限等待 |
+| 恢复树 reload 后面板隐藏，requestAnimationFrame 被节流导致终端状态停在 starting | 1 | 注入 terminal item 后重新展开并 pin，按真实可见添加路径验证 PTY |
+| 渲染页 reload 后丢失面板展开 CSS 状态 | 1 | 主进程在 `did-finish-load` 重放当前 `panel-state`，使重载后的界面与原生窗口状态一致 |
 | Homebrew 首次安装 UTM 后应用缺失 | 1 | 手动续传并校验官方 UTM DMG 后重新安装成功 |
 | 当前会话没有可调用的 Computer Use node_repl | 1 | 改用 UTM/QEMU 配置与无人值守安装路径 |
 | UUP 下载脚本使用了错误的 CrystalFetch 二进制目录 | 1 | 将路径从 `Contents/Resources` 修正为 `Contents/MacOS` |
@@ -231,3 +240,21 @@ Phase 19: 发布 v0.2.2
 - [x] 完成测试、Windows x64 构建和校验
 - [x] 提交、合入并发布 GitHub Release
 - **Status:** complete
+
+### Phase 26: 常驻终端与 Code Agent 会话
+- [x] 设计 shell 白名单、PTY 生命周期、IPC 安全与自包含打包契约
+- [x] 实现 PowerShell、CMD 与可选 Git Bash 发现
+- [x] 实现 xterm 输入输出、resize、停止/重启及切页常驻
+- [x] 增加终端服务单测、Electron E2E 和退出清理回归
+- [x] 完成生产依赖审计、Windows x64 构建和干净恢复演练
+- [ ] 在可用 Windows 10/11 x64 环境完成真实 ConPTY I/O 验证（既有 VM 黑屏阻塞）
+- **Status:** implementation_complete
+
+### Phase 27: 发布 v0.3.0 常驻终端
+- [x] 从最新 `origin/main` 建立隔离发布分支
+- [x] 仅迁移终端功能、设计、测试和必要依赖
+- [x] 更新版本号、README 和 Release Notes
+- [x] 在发布分支执行完整测试、生产审计和 Windows x64 构建
+- [ ] 生成 SHA-256，提交 PR 并合入 `main`
+- [ ] 创建 GitHub Release 并验证附件
+- **Status:** in_progress

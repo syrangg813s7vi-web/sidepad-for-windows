@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sidepad</title>
+    <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -64,6 +65,17 @@
             </div>
             <div class="file-preview" id="filePreview" hidden></div>
           </section>
+          <section class="terminal-view" id="terminalView" hidden>
+            <div class="terminal-toolbar">
+              <span id="terminalStatus" data-state="starting">终端准备中</span>
+              <div>
+                <button id="terminalClearButton" type="button">清屏</button>
+                <button id="terminalRestartButton" type="button">重新启动</button>
+                <button id="terminalStopButton" type="button">停止</button>
+              </div>
+            </div>
+            <div class="terminal-panels" id="terminalPanels"></div>
+          </section>
           <div class="loading" id="loading"><i></i><span>正在打开网页…</span></div>
           <section class="web-error" id="webError" hidden>
             <div class="web-error-icon">!</div>
@@ -95,11 +107,12 @@
         <button class="modal-close" id="modalClose">×</button>
         <div class="modal-kicker">ADD TO SIDEPAD</div>
         <h2 id="modalTitle">添加内容</h2>
-        <p>网页、快速笔记或电脑里的文档，都可以放进侧边栏。</p>
+        <p>网页、笔记、文档或常驻终端，都可以放进侧边栏。</p>
         <div class="content-types">
           <button class="content-type active" data-type="web"><b>⌘</b><span>网页<small>Chromium 页面</small></span></button>
           <button class="content-type" data-type="note"><b>≡</b><span>文本笔记<small>自动保存</small></span></button>
           <button class="content-type" data-type="file"><b>↑</b><span>本地文件<small>PDF / PPT / 图片</small></span></button>
+          <button class="content-type" data-type="terminal"><b>&gt;_</b><span>终端<small>PowerShell / CMD</small></span></button>
         </div>
         <form id="siteForm">
           <label>名称<input id="siteName" maxlength="30" placeholder="例如：项目文档" required /></label>
@@ -110,6 +123,17 @@
             <button type="submit" class="primary">添加网页</button>
           </div>
         </form>
+        <form id="terminalForm" hidden>
+          <label>终端
+            <select id="terminalShell" required></select>
+          </label>
+          <label>名称<input id="terminalName" maxlength="30" placeholder="例如：Code Agent" required /></label>
+          <div class="form-error" id="terminalFormError"></div>
+          <div class="modal-actions">
+            <button type="button" class="secondary" id="terminalCancelButton">取消</button>
+            <button type="submit" class="primary">添加终端</button>
+          </div>
+        </form>
       </section>
     </div>
 
@@ -117,6 +141,9 @@
     <script src="../../node_modules/docx-preview/dist/docx-preview.min.js"></script>
     <script src="../../node_modules/exceljs/dist/exceljs.min.js"></script>
     <script src="../../node_modules/pptx-preview/dist/pptx-preview.umd.js"></script>
+    <script src="../../node_modules/@xterm/xterm/lib/xterm.js"></script>
+    <script src="../../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+    <script src="terminal.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
