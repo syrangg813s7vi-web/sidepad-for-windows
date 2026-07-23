@@ -42,6 +42,6 @@
 ## SHA-256
 
 ```text
-53a0220643aa4a17a8a325d5a22fea7dd40fbbdb0ce461bc6df6ba2e56a60716  Sidepad Setup 0.3.0.exe
-78c03f460f7ee04bd843f50a721b24ea2193b5488db1a97d0d32f63f170f5d3c  Sidepad 0.3.0.exe
+53a0220643aa4a17a8a325d5a22fea7dd40fbbdb0ce461bc6df6ba2e56a60716  Sidepad.Setup.0.3.0.exe
+78c03f460f7ee04bd843f50a721b24ea2193b5488db1a97d0d32f63f170f5d3c  Sidepad.0.3.0.exe
 ```
